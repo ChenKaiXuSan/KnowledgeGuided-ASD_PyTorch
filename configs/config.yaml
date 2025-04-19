@@ -1,0 +1,13 @@
+# * this method should use python -m to make sure the hydra config is loaded correctly
+# hydra config
+hydra:
+  run:
+    dir: ${train.log_path}
+  sweep:
+    dir: ${train.log_path}
+    subdir: ${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: false 
+
+trian:
+  log_path: logs/
