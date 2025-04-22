@@ -1,24 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
-'''
-File: /workspace/deep-learning-project-template/project/main.py
-Project: /workspace/deep-learning-project-template/project
-Created Date: Friday November 29th 2024
-Author: Kaixu Chen
------
-Comment:
-
-Have a good code time :)
------
-Last Modified: Friday November 29th 2024 12:51:51 pm
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
------
-Copyright (c) 2024 The University of Tsukuba
------
-HISTORY:
-Date      	By	Comments
-----------	---	---------------------------------------------------------
-'''
 """
 File: main.py
 Project: project
@@ -71,17 +50,19 @@ from pytorch_lightning.callbacks import (
 from project.dataloader.data_loader import WalkDataModule
 
 #####################################
-# select different experiment trainer 
+# select different experiment trainer
 #####################################
 
 # 3D CNN model
 from project.trainer.train_single import SingleModule
 from project.trainer.train_late_fusion import LateFusionModule
 from project.trainer.train_temporal_mix import TemporalMixModule
+
 # compare experiment
 from project.trainer.train_two_stream import TwoStreamModule
 from project.trainer.train_cnn_lstm import CNNLstmModule
 from project.trainer.train_cnn import CNNModule
+
 # Attention Branch Network
 from project.trainer.train_backbone_atn import BackboneATNModule
 
@@ -181,33 +162,33 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
     )
 
-    # trainer.fit(classification_module, data_module)
+    trainer.fit(classification_module, data_module)
 
     # the validate method will wirte in the same log twice, so use the test method.
     trainer.test(
         classification_module,
         data_module,
-        # ckpt_path="best",
+        ckpt_path="best",
     )
 
-    # TODO: the save helper for 3dnn_atn not implemented yet.
-    if hparams.train.backbone == "3dcnn_atn":
-        pass
-    else:
-        # save_helper(hparams, classification_module, data_module, fold) #! debug only
-        save_helper(
-            hparams,
-            classification_module.load_from_checkpoint(
-                trainer.checkpoint_callback.best_model_path
-            ),
-            data_module,
-            fold,
-        )
+    # TODO: this step move to trainer.test() method.
+    # if hparams.train.backbone == "3dcnn_atn":
+    #     pass
+    # else:
+    #     # save_helper(hparams, classification_module, data_module, fold) #! debug only
+    #     save_helper(
+    #         hparams,
+    #         classification_module.load_from_checkpoint(
+    #             trainer.checkpoint_callback.best_model_path
+    #         ),
+    #         data_module,
+    #         fold,
+    #     )
 
 
 @hydra.main(
     version_base=None,
-    config_path="../configs", # * the config_path is relative to location of the python script
+    config_path="../configs",  # * the config_path is relative to location of the python script
     config_name="config.yaml",
 )
 def init_params(config):
