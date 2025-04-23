@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Monday April 8th 2024 2:50:12 am
+Last Modified: Tuesday April 22nd 2025 10:56:36 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -59,8 +59,8 @@ class DefineCrossValidation(object):
 
     def __init__(self, config) -> None:
         
-        self.video_path: Path = Path(config.data.gait_seg_data_path) # json file path
-        self.gait_seg_idx_path: Path = Path(config.data.gait_seg_index_data_path) # used for training path mapping
+        self.video_path: Path = Path(config.data.data_info_path) # json file path
+        self.gait_seg_idx_path: Path = Path(config.data.index_mapping) # used for training path mapping
 
         self.K: int = config.train.fold
         self.sampler: str = config.data.sampling # data balance, [over, under, none]
@@ -159,6 +159,8 @@ class DefineCrossValidation(object):
 
             if not (temp_path / video_disease).exists():
                 (temp_path / video_disease).mkdir(parents=True, exist_ok=False)
+
+            video_path = video_path.replace("/data/", "/dataset/") # the video path in the json file
 
             shutil.copy(
                 video_path, temp_path / video_disease / (video_name + ".mp4")

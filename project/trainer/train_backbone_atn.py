@@ -9,7 +9,7 @@ Thie file is the train/val/test process for 3dcnn with attention branch network 
 
 Have a good code time!
 -----
-Last Modified: Tuesday November 26th 2024 6:37:15 am
+Last Modified: Saturday April 19th 2025 7:58:58 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
@@ -39,7 +39,7 @@ from torchmetrics.classification import (
     MulticlassConfusionMatrix
 )
 
-from project.helper import save_CAM, save_CM
+from project.helper import save_CM
 
 
 class BackboneATNModule(LightningModule):
