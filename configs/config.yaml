@@ -12,7 +12,7 @@ optimizer:
   beta2: 0.999
 
 data:
-  root_path: /workspace/dataset/pose_attn_map_dataset # this is the root path of dataset.
+  root_path: /workspace/data/pose_attn_map_dataset # this is the root path of dataset.
 
   data_info_path: ${data.root_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
   skeleton_path: ${data.root_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
