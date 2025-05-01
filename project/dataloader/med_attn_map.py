@@ -129,6 +129,33 @@ class MedAttnMap:
 
         t, c, h, w = vframes.shape
 
+        K = keypoints.shape[0]
+        y_grid, x_grid = torch.meshgrid(
+            torch.arange(height, device=device),
+            torch.arange(width, device=device),
+            indexing='ij'
+        )  # shape: [H, W]
+
+        attn_maps = []
+
+        for i in range(K):
+            x, y = keypoints[i]
+            if x < 0 or y < 0:
+                attn_maps.append(torch.zeros((height, width), device=device))
+                continue
+
+            dist_squared = (x_grid - x) ** 2 + (y_grid - y) ** 2
+            heatmap = torch.exp(-dist_squared / (2 * sigma ** 2))
+
+            if confidence is not None:
+                heatmap *= confidence[i]
+
+            attn_maps.append(heatmap)
+
+        attn_stack = torch.stack(attn_maps, dim=0)  # [K, H, W]
+        attn_max = torch.max(attn_stack, dim=0)[0].unsqueeze(0)  # [1, H, W]
+
+        return attn_max  # or attn_stack for each keypoint map
 
         pass
 
