@@ -6,7 +6,7 @@
 		},
 		{
 			"name": "dataset",
-			"path": "/workspace/dataset/"
+			"path": "/workspace/data/"
 		},
 		{
 			"name": "Skeleton_ASD_PyTorch",
