@@ -103,7 +103,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         bbox_none_index = file_info_dict["none_index"]
         bbox = file_info_dict["bbox"]
 
-        # todo: here generate the attn map with skeleton
+        # TODO: here generate the attn map with skeleton
         attn_map = self.attn_map(
             video_name=video_name,
             video_path=video_path,
