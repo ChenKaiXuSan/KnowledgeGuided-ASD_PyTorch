@@ -9,10 +9,10 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": [
-        "model.backbone=3dcnn",
+        "model.backbone=3dcnnatn",
         "model.model_class_num=3",
         "train.fast_dev_run=false",
-        "train.gpu_num=0",
+        "train.gpu=0",
         "train.clip_duration=1",
         "train.uniform_temporal_subsample_num=8",
         "data.num_workers=0",

@@ -1,4 +1,4 @@
-'''
+"""
 File: train.py
 Project: project
 Created Date: 2023-10-19 02:29:47
@@ -6,7 +6,7 @@ Author: chenkaixu
 -----
 Comment:
  This file is the train/val/test process for the project.
- 
+
 
 Have a good code time!
 -----
@@ -21,13 +21,12 @@ Date 	By 	Comments
 
 14-12-2023	Kaixu Chen refactor the code, now it a simple code to train video frame from dataloader.
 
-'''
+"""
 
 from typing import Any, List, Optional, Union
 
 import torch
 import torch.nn.functional as F
-
 
 from pytorch_lightning import LightningModule
 
@@ -36,10 +35,11 @@ from torchmetrics.classification import (
     MulticlassPrecision,
     MulticlassRecall,
     MulticlassF1Score,
-    MulticlassConfusionMatrix
+    MulticlassConfusionMatrix,
 )
 
 from project.models.make_model import MakeVideoModule
+
 
 class Res3DCNNTrainer(LightningModule):
     def __init__(self, hparams):
@@ -51,7 +51,7 @@ class Res3DCNNTrainer(LightningModule):
         self.num_classes = hparams.model.model_class_num
 
         # define model
-        self.video_cnn = MakeVideoModule(hparams)() 
+        self.video_cnn = MakeVideoModule(hparams)()
 
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
@@ -66,7 +66,7 @@ class Res3DCNNTrainer(LightningModule):
         return self.video_cnn(x)
 
     def training_step(self, batch: torch.Tensor, batch_idx: int):
-        
+
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -80,10 +80,10 @@ class Res3DCNNTrainer(LightningModule):
         video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
-        # check shape 
+        # check shape
         if b == 1:
             label = label.unsqueeze(0)
-            
+
         assert label.shape[0] == video_preds.shape[0]
 
         loss = F.cross_entropy(video_preds, label.long())
@@ -103,12 +103,13 @@ class Res3DCNNTrainer(LightningModule):
                 "train/video_precision": video_precision,
                 "train/video_recall": video_recall,
                 "train/video_f1_score": video_f1_score,
-            }, 
-            on_epoch=True, on_step=True, batch_size=b
+            },
+            on_epoch=True,
+            on_step=True,
+            batch_size=b,
         )
         print("train loss: ", loss.item())
         return loss
-
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int):
 
@@ -127,7 +128,7 @@ class Res3DCNNTrainer(LightningModule):
         if b == 1:
             label = label.unsqueeze(0)
 
-        # check shape 
+        # check shape
         assert label.shape[0] == b
 
         loss = F.cross_entropy(video_preds, label.long())
@@ -140,7 +141,7 @@ class Res3DCNNTrainer(LightningModule):
         video_recall = self._recall(video_preds_softmax, label)
         video_f1_score = self._f1_score(video_preds_softmax, label)
         video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
-        
+
         self.log_dict(
             {
                 "val/video_acc": video_acc,
@@ -148,7 +149,9 @@ class Res3DCNNTrainer(LightningModule):
                 "val/video_recall": video_recall,
                 "val/video_f1_score": video_f1_score,
             },
-            on_epoch=True, on_step=True, batch_size=b
+            on_epoch=True,
+            on_step=True,
+            batch_size=b,
         )
 
         print("val loss: ", loss.item())
@@ -162,14 +165,14 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h, 
+        attn_video = video * attn_map  # b, c, t, h,
         video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:
             label = label.unsqueeze(0)
 
-        # check shape 
+        # check shape
         assert label.shape[0] == b
 
         loss = F.cross_entropy(video_preds, label.long())
@@ -182,7 +185,7 @@ class Res3DCNNTrainer(LightningModule):
         video_recall = self._recall(video_preds_softmax, label)
         video_f1_score = self._f1_score(video_preds_softmax, label)
         video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
-        
+
         self.log_dict(
             {
                 "test/video_acc": video_acc,
@@ -190,7 +193,9 @@ class Res3DCNNTrainer(LightningModule):
                 "test/video_recall": video_recall,
                 "test/video_f1_score": video_f1_score,
             },
-            on_epoch=True, on_step=True, batch_size=b
+            on_epoch=True,
+            on_step=True,
+            batch_size=b,
         )
 
         return {
@@ -216,7 +221,9 @@ class Res3DCNNTrainer(LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, T_max=self.trainer.estimated_stepping_batches, verbose=True, 
+                    optimizer,
+                    T_max=self.trainer.estimated_stepping_batches,
+                    verbose=True,
                 ),
                 "monitor": "train/loss",
             },

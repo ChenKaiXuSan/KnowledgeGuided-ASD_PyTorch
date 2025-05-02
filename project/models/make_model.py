@@ -28,8 +28,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from pytorchvideo.models import resnet
-
 
 class MakeVideoModule(nn.Module):
     """
@@ -38,7 +36,6 @@ class MakeVideoModule(nn.Module):
     """
 
     def __init__(self, hparams) -> None:
-
         super().__init__()
 
         self.model_name = hparams.model.backbone
@@ -46,7 +43,6 @@ class MakeVideoModule(nn.Module):
         self.model_depth = hparams.model.model_depth
 
     def initialize_walk_resnet(self, input_channel: int = 3) -> nn.Module:
-
         slow = torch.hub.load(
             "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
         )
@@ -66,7 +62,6 @@ class MakeVideoModule(nn.Module):
         return slow
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-
         if self.model_name == "3dcnn":
             return self.initialize_walk_resnet()
         else:
@@ -81,20 +76,14 @@ class ATN3DCNN(nn.Module):
     """
 
     def __init__(self, hparams) -> None:
-
         super().__init__()
 
-        self.backbone = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
         self.model_depth = hparams.model.model_depth
-        self.transfer_learning = hparams.train.transfer_learning
 
-        if self.backbone == "3dcnn_atn":
-            self.stem, self.stage, self.head = self.load_resnet(
-                input_channel=3, model_class_num=self.model_class_num
-            )
-        else:
-            raise KeyError(f"the model name {self.backbone} is not in the model zoo")
+        self.stem, self.stage, self.head = self.load_resnet(
+            input_channel=3, model_class_num=self.model_class_num
+        )
 
         # make self layer
         self.relu = nn.ReLU(inplace=True)
@@ -122,7 +111,6 @@ class ATN3DCNN(nn.Module):
 
     @staticmethod
     def load_resnet(input_channel: int = 3, model_class_num: int = 3) -> nn.Module:
-
         slow = torch.hub.load(
             "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
         )
@@ -146,7 +134,6 @@ class ATN3DCNN(nn.Module):
         return stem, stage, head
 
     def forward(self, x):
-
         b, c, t, h, w = x.size()
         x = self.stem(x)  # b, 64, 8, 56, 56
         for resstage in self.stage:
@@ -155,19 +142,28 @@ class ATN3DCNN(nn.Module):
         ax = self.bn_att(x)
         ax = self.relu(self.bn_att2(self.attn_conv(ax)))
         axb, axc, axt, axh, axw = ax.size()
-        self.att = self.sigmoid(self.bn_att3(self.attn_conv3(ax)))  # b, 1, 8, 7, 7
 
+        att = self.sigmoid(self.bn_att3(self.attn_conv3(ax)))  # b, 1, 8, 7, 7
+        #
         ax = self.attn_conv2(ax)
         ax = self.att_gap(ax)
         ax = ax.view(ax.size(0), -1)
-
-        rx = x * self.att
+        # pred score
+        rx = x * att
         rx = rx + x
         # rx = self.avgpool(rx) # ? I think this is not necessary
 
         rx = self.head(rx)
 
-        return ax, rx, self.att
+        # attn map
+        res_att = []
+        for f in range(t):
+            _att = F.interpolate(
+                att[:, :, f, ...], size=(h, w), mode="bilinear", align_corners=False
+            )
+            res_att.append(_att)
+
+        return ax, rx, torch.stack(res_att, dim=2)
 
 
 class MakeImageModule(nn.Module):
@@ -177,7 +173,6 @@ class MakeImageModule(nn.Module):
     """
 
     def __init__(self, hparams) -> None:
-
         super().__init__()
 
         self.model_name = hparams.model.model
@@ -197,7 +192,6 @@ class MakeImageModule(nn.Module):
         return model
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-
         if self.model_name == "resnet":
             return self.make_resnet()
         else:
@@ -211,14 +205,12 @@ class MakeOriginalTwoStream(nn.Module):
     """
 
     def __init__(self, hparams) -> None:
-
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
         self.transfer_learning = hparams.train.transfer_learning
 
     def make_resnet(self, input_channel: int = 3):
-
         model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
 
         # from pytorchvision, use resnet 50.
@@ -241,7 +233,6 @@ class CNNLSTM(nn.Module):
     """
 
     def __init__(self, hparams) -> None:
-
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
@@ -255,7 +246,6 @@ class CNNLSTM(nn.Module):
         self.fc = nn.Linear(512, self.model_class_num)
 
     def make_cnn(self, input_channel: int = 3):
-
         model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
 
         # from pytorchvision, use resnet 50.
@@ -272,7 +262,6 @@ class CNNLSTM(nn.Module):
         return model
 
     def forward(self, x):
-
         b, c, t, h, w = x.size()
 
         res = []

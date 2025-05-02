@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/code/project/main.py
 Project: /workspace/code/project
 Created Date: Tuesday April 22nd 2025
@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Tuesday April 22nd 2025 10:56:36 am
+Last Modified: Thursday May 1st 2025 8:34:05 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -18,8 +18,8 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
- 
+"""
+
 import os
 import logging
 import hydra
@@ -41,8 +41,8 @@ from project.dataloader.data_loader import WalkDataModule
 # select different experiment trainer
 #####################################
 
-# 3D CNN model
 from project.trainer.train_3dcnn import Res3DCNNTrainer
+from project.trainer.train_3dcnn_atn import ATN3DCNNTrainer
 
 from project.cross_validation import DefineCrossValidation
 
@@ -64,6 +64,8 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # * select experiment
     if hparams.model.backbone == "3dcnn":
         classification_module = Res3DCNNTrainer(hparams)
+    elif hparams.model.backbone == "3dcnnatn":
+        classification_module = ATN3DCNNTrainer(hparams)
     else:
         raise ValueError("the experiment backbone is not supported.")
 
@@ -100,7 +102,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     trainer = Trainer(
         devices=[
-            int(hparams.train.gpu_num),
+            int(hparams.train.gpu),
         ],
         accelerator="gpu",
         max_epochs=hparams.train.max_epochs,

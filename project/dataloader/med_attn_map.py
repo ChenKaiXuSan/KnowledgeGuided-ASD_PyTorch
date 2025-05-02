@@ -198,7 +198,6 @@ class MedAttnMap:
         # * 2 generate the attention map
         attn_map = self.generate_attention_map(vframes, mapped_keypoint, skeleton[0]["keypoint"], confidence_score=skeleton[0]["keypoint_score"])
 
-        # TODO: should change the save path
-        self.save_attention_map(attn_map, "logs", video_name)
+        # self.save_attention_map(attn_map, "logs", video_name)
 
         return attn_map 

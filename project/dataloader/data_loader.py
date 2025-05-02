@@ -39,7 +39,6 @@ from omegaconf import OmegaConf
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision.transforms.v2 import functional as F, Transform
 
 from pytorchvideo.data import make_clip_sampler
 from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
@@ -292,7 +291,7 @@ class WalkDataModule(LightningDataModule):
             batch_size=self._default_batch_size,
             num_workers=self._NUM_WORKERS,
             pin_memory=True,
-            shuffle=True,
+            shuffle=False,
             drop_last=True,
             collate_fn=self.collate_fn,
         )
@@ -309,11 +308,10 @@ class WalkDataModule(LightningDataModule):
         if self._attn_map:
             test_data_loader = DataLoader(
                 self.test_gait_dataset,
-                # batch_size=self._gait_cycle_batch_size,
-                batch_size=16,
+                batch_size=self._default_batch_size,
                 num_workers=self._NUM_WORKERS,
                 pin_memory=True,
-                shuffle=True,
+                shuffle=False,
                 drop_last=True,
                 collate_fn=self.collate_fn,
             )
