@@ -22,8 +22,9 @@ Date      	By	Comments
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
+import os
 import torch
-from torchvision.io import write_png
+from torchvision.utils import save_image
 
 import pandas as pd 
 
@@ -122,66 +123,82 @@ class MedAttnMap:
         return res
             
     
-    def generate_attention_map(self, vframes: torch.Tensor, mapped_keypoint: list) -> None:
+    def generate_attention_map(self, vframes: torch.Tensor, mapped_keypoint: list, keypoint: torch.Tensor, confidence_score) -> None:
         """
         Generate the attention map for the given video path.
         """
 
         t, c, h, w = vframes.shape
 
-        K = keypoints.shape[0]
+        sigma = 0.1 * min(h, w)  # standard deviation for Gaussian kernel
+
         y_grid, x_grid = torch.meshgrid(
-            torch.arange(height, device=device),
-            torch.arange(width, device=device),
+            torch.arange(h),
+            torch.arange(w),
             indexing='ij'
         )  # shape: [H, W]
 
-        attn_maps = []
+        res = []
 
-        for i in range(K):
-            x, y = keypoints[i]
-            if x < 0 or y < 0:
-                attn_maps.append(torch.zeros((height, width), device=device))
-                continue
+        for frame in range(t):
 
-            dist_squared = (x_grid - x) ** 2 + (y_grid - y) ** 2
-            heatmap = torch.exp(-dist_squared / (2 * sigma ** 2))
+            attn_maps = []
 
-            if confidence is not None:
-                heatmap *= confidence[i]
+            for i in mapped_keypoint:
 
-            attn_maps.append(heatmap)
+                x = keypoint[0, frame, i, 0] * w 
+                y = keypoint[0, frame, i, 1] * h
 
-        attn_stack = torch.stack(attn_maps, dim=0)  # [K, H, W]
-        attn_max = torch.max(attn_stack, dim=0)[0].unsqueeze(0)  # [1, H, W]
+                # none keypoint
+                if x < 0 or y < 0:
+                    attn_maps.append(torch.zeros((h, w)))
+                    continue
 
-        return attn_max  # or attn_stack for each keypoint map
+                dist_squared = (x_grid - x) ** 2 + (y_grid - y) ** 2
+                heatmap = torch.exp(-dist_squared / (2 * sigma ** 2))
 
-        pass
+                curr_confidence = confidence_score[0, frame, i]
+                if curr_confidence > 0.8:
+                    heatmap *= curr_confidence
 
-    def save_attention_map(self, attention_map: Any, save_path: str) -> None:
+                attn_maps.append(heatmap)
+
+            attn_stack = torch.stack(attn_maps, dim=0)  # [K, H, W]
+            attn_mean = torch.mean(attn_stack, dim=0).unsqueeze(0)
+
+            res.append(attn_mean)
+            
+        return torch.stack(res, dim=0)  # [T, H, W]
+
+    def save_attention_map(self, attention_map: torch.Tensor, save_path: str, video_name: str) -> None:
         """
         Save the generated attention map to the specified path.
         """
         # Save the attention map
-        pass
+        t, c, h, w = attention_map.shape
+
+        save_pth = os.path.join(save_path, "attention_map", video_name)
+        if not os.path.exists(save_pth):
+            os.makedirs(save_pth)
+
+        for i in range(t):
+        
+            save_image(attention_map[i], save_pth + f"/attn_{i}.png", normalize=True)
 
     def __call__(self, video_path, disease, vframes, video_name) -> None:
-
-        attn_map = [] 
-
-        t, c, h, w = vframes.shape
 
         # for one video file
         # * 1 find the doctor result
         doctor_attn, mapped_keypoint = self.find_doctor_res(video_name)
 
         # * 2 find the skeleton
-        # ? 为什么会有两个skeleton被找出来？
+        # FIXME: 为什么会有两个skeleton被找出来？
         skeleton = self.find_skeleton(video_name)
 
         # * 2 generate the attention map
-        # todo: here should be the attention map generation
-        attn_map = self.generate_attention_map(vframes, mapped_keypoint, skeleton[0])
+        attn_map = self.generate_attention_map(vframes, mapped_keypoint, skeleton[0]["keypoint"], confidence_score=skeleton[0]["keypoint_score"])
+
+        # TODO: should change the save path
+        self.save_attention_map(attn_map, "logs", video_name)
 
         return attn_map 
