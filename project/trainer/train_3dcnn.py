@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time!
 -----
-Last Modified: Saturday April 19th 2025 7:58:58 am
+Last Modified: Thursday May 1st 2025 8:34:05 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
@@ -69,12 +69,15 @@ class Res3DCNNTrainer(LightningModule):
         
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
+        attn_map = batch["attn_map"].detach()  # b, c, t, h, w
         label = batch["label"].detach().float().squeeze()  # b
         # sample_info = batch["info"] # b is the video instance number
 
         b, c, t, h, w = video.shape
 
-        video_preds = self.video_cnn(video)
+        attn_video = video * attn_map  # b, c, t, h, w
+
+        video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         # check shape 
@@ -111,11 +114,14 @@ class Res3DCNNTrainer(LightningModule):
 
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
+        attn_map = batch["attn_map"].detach()  # b, c, t, h, w
         label = batch["label"].detach().float().squeeze()  # b
 
         b, c, t, h, w = video.shape
 
-        video_preds = self.video_cnn(video)
+        attn_video = video + attn_map  # b, c, t, h, w
+
+        video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:
@@ -151,11 +157,13 @@ class Res3DCNNTrainer(LightningModule):
 
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
+        attn_map = batch["attn_map"].detach()  # b, c, t, h, w
         label = batch["label"].detach().float().squeeze()  # b
 
         b, c, t, h, w = video.shape
 
-        video_preds = self.video_cnn(video)
+        attn_video = video * attn_map  # b, c, t, h, 
+        video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:

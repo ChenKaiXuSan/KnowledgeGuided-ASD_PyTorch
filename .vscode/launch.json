@@ -17,6 +17,7 @@
         "train.uniform_temporal_subsample_num=8",
         "data.num_workers=0",
         "data.gait_cycle_batch_size=1",
+        "data.default_batch_size=2",
       ]
     },
   ]

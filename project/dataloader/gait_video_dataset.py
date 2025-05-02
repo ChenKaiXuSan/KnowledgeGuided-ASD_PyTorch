@@ -32,10 +32,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 import torch
 
 from torchvision.io import read_video, write_png
-from torchvision.transforms.v2.functional import (
-    uniform_temporal_subsample_video,
-    uniform_temporal_subsample,
-)
 
 from project.dataloader.med_attn_map import MedAttnMap
 
@@ -61,23 +57,30 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         if "True" in self._experiment:
             self.attn_map = MedAttnMap(doctor_res_path, skeleton_path)
 
-    def move_transform(self, vframes: list[torch.Tensor]) -> None:
-
-        if self._transform is not None:
-            video_t_list = []
-            for video_t in vframes:
-                transformed_img = self._transform(video_t.permute(1, 0, 2, 3))
-                video_t_list.append(transformed_img)
-
-            return torch.stack(video_t_list, dim=0)  # c, t, h, w
-        else:
-            print("no transform")
-            return torch.stack(vframes, dim=0)
-
     def __len__(self):
         return len(self._labeled_videos)
 
-    def __getitem__(self, index) -> Any:
+    def move_transform(self, vframes: torch.Tensor, fps: int) -> torch.Tensor:
+
+        t, c, h, w = vframes.shape 
+
+        batch_res = [] 
+
+        for f in range(0, t, fps):
+            one_sec_vframes = vframes[f : f + fps, :, :, :]
+
+            if self._transform is not None:
+
+                transformed_img = self._transform(one_sec_vframes.permute(1, 0, 2, 3))
+
+                batch_res.append(transformed_img.permute(1, 0, 2, 3))  # c, t, h, w
+            else:
+                logger.warning("no transform")
+                batch_res.append(one_sec_vframes.permute(1, 0, 2, 3))  # c, t, h, w
+
+        return torch.stack(batch_res, dim=0)  # b, c, t, h, w
+
+    def __getitem__(self, index) -> dict[str, Any]:
 
         # load the video tensor from json file
         with open(self._labeled_videos[index]) as f:
@@ -88,7 +91,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         video_path = file_info_dict["video_path"]
 
         try:
-            vframes, _, _ = read_video(video_path, output_format="TCHW")
+            vframes, _, info = read_video(video_path, output_format="TCHW", pts_unit="sec")
         except Exception as e:
             _video_path = video_path.replace("/data/", "/dataset/")
             vframes, _, _ = read_video(_video_path, output_format="TCHW")
@@ -103,7 +106,6 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         bbox_none_index = file_info_dict["none_index"]
         bbox = file_info_dict["bbox"]
 
-        # TODO: here generate the attn map with skeleton
         attn_map = self.attn_map(
             video_name=video_name,
             video_path=video_path,
@@ -111,57 +113,16 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             vframes=vframes,
         )
 
-        # print(f"video name: {video_name}, gait cycle index: {gait_cycle_index}")
-        if "True" in self._experiment:
-            # should return the new frame, named temporal mix.
-            defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox)
-            defined_vframes = self.move_transform(defined_vframes)
-
-        elif "late_fusion" in self._experiment:
-
-            stance_vframes, used_gait_idx = split_gait_cycle(
-                vframes, gait_cycle_index, 0
-            )
-            swing_vframes, used_gait_idx = split_gait_cycle(
-                vframes, gait_cycle_index, 1
-            )
-
-            # * keep shape
-            if len(stance_vframes) > len(swing_vframes):
-                stance_vframes = stance_vframes[: len(swing_vframes)]
-            elif len(stance_vframes) < len(swing_vframes):
-                swing_vframes = swing_vframes[: len(stance_vframes)]
-
-            trans_stance_vframes = self.move_transform(stance_vframes)
-            trans_swing_vframes = self.move_transform(swing_vframes)
-
-            # * 将不同的phase组合成一个batch返回
-            defined_vframes = torch.stack(
-                [trans_stance_vframes, trans_swing_vframes], dim=-1
-            )
-
-        elif "single" in self._experiment:
-            if "stance" in self._experiment:
-                defined_vframes, used_gait_idx = split_gait_cycle(
-                    vframes, gait_cycle_index, 0
-                )
-            elif "swing" in self._experiment:
-                defined_vframes, used_gait_idx = split_gait_cycle(
-                    vframes, gait_cycle_index, 1
-                )
-
-            defined_vframes = self.move_transform(defined_vframes)
-
-        else:
-            raise ValueError("experiment name is not correct")
+        transformed_vframes = self.move_transform(vframes, int(info["video_fps"]))
+        transformed_attn_map = self.move_transform(attn_map, int(info["video_fps"]))
 
         sample_info_dict = {
-            "video": defined_vframes,
+            "video": transformed_vframes,
             "label": label,
+            "attn_map": transformed_attn_map,
             "disease": disease,
             "video_name": video_name,
             "video_index": index,
-            "gait_cycle_index": gait_cycle_index,
             "bbox_none_index": bbox_none_index,
         }
 
@@ -171,9 +132,9 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 def labeled_gait_video_dataset(
     experiment: str,
     transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
-    dataset_idx: Dict = None,
-    doctor_res_path: str = None,
-    skeleton_path: str = None,
+    dataset_idx: Dict = {},
+    doctor_res_path: str = "",
+    skeleton_path: str = "",
 ) -> LabeledGaitVideoDataset:
 
     dataset = LabeledGaitVideoDataset(

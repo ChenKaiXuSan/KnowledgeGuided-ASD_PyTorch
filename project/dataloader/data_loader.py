@@ -86,18 +86,13 @@ class WalkDataModule(LightningDataModule):
 
         self._attn_map = opt.train.attn_map
 
-        if self._attn_map == True:
-            self.mapping_transform = Compose(
-                [Div255(), Resize(size=[self._IMG_SIZE, self._IMG_SIZE])]
-            )
-        else:
-            self.mapping_transform = Compose(
-                [
-                    UniformTemporalSubsample(self.uniform_temporal_subsample_num),
-                    Div255(),
-                    Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
-                ]
-            )
+        self.mapping_transform = Compose(
+            [
+                UniformTemporalSubsample(self.uniform_temporal_subsample_num),
+                Div255(),
+                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+            ]
+        )
 
         self.train_video_transform = Compose(
             [
@@ -186,70 +181,26 @@ class WalkDataModule(LightningDataModule):
 
         else:
 
-            if "single" in self._backbone:
+            # train dataset
+            self.train_gait_dataset = labeled_video_dataset(
+                data_path=self._dataset_idx[2],
+                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                transform=self.train_video_transform,
+            )
 
-                # train dataset
-                if "random" in self._experiment:
-                    self.train_gait_dataset = labeled_video_dataset(
-                        data_path=self._dataset_idx[2],
-                        clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                        transform=self.train_video_transform,
-                    )
+            # val dataset
+            self.val_gait_dataset = labeled_video_dataset(
+                data_path=self._dataset_idx[3],
+                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                transform=self.val_video_transform,
+            )
 
-                else:
-                    self.train_gait_dataset = labeled_gait_video_dataset(
-                        experiment=self._experiment,
-                        dataset_idx=self._dataset_idx[
-                            0
-                        ],  # train mapped path, include gait cycle index.
-                        transform=self.mapping_transform,
-                    )
-
-                # val dataset
-                self.val_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                    transform=self.val_video_transform,
-                )
-
-                # test dataset
-                self.test_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                    transform=self.val_video_transform,
-                )
-
-            elif "late_fusion" in self._experiment:
-
-                # train dataset
-                self.train_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        0
-                    ],  # train mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-                # val dataset
-                self.val_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        1
-                    ],  # val mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-                # test dataset
-                self.test_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        1
-                    ],  # val mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-            else:
-                raise ValueError("the experiment backbone is not supported.")
+            # test dataset
+            self.test_gait_dataset = labeled_video_dataset(
+                data_path=self._dataset_idx[3],
+                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                transform=self.val_video_transform,
+            )
 
     def collate_fn(self, batch):
         """this function process the batch data, and return the batch data.
@@ -265,6 +216,7 @@ class WalkDataModule(LightningDataModule):
 
         batch_label = []
         batch_video = []
+        batch_attn_map = []
 
         # * mapping label
         for i in batch:
@@ -273,6 +225,8 @@ class WalkDataModule(LightningDataModule):
             disease = i["disease"]
 
             batch_video.append(i["video"])
+            batch_attn_map.append(i["attn_map"])
+
             for _ in range(gait_num):
 
                 if disease in disease_to_num_mapping_Dict[self._class_num].keys():
@@ -286,12 +240,14 @@ class WalkDataModule(LightningDataModule):
                         disease_to_num_mapping_Dict[self._class_num]["non-ASD"]
                     )
 
-        # video, b, c, t, h, w, which include the video frame from sample info
-        # label, b, which include the video frame from sample info
-        # sample info, the raw sample info from dataset
+        # video, b, c, t, h, w, which include the video frame
+        # attn_map, b, c, t, h, w, which include the attn map
+        # label, b, which include the label of the video
+        # sample info, the raw sample info
         return {
             "video": torch.cat(batch_video, dim=0),
             "label": torch.tensor(batch_label),
+            "attn_map": torch.cat(batch_attn_map, dim=0),
             "info": batch,
         }
 
@@ -331,26 +287,15 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._attn_map:
-            val_data_loader = DataLoader(
-                self.val_gait_dataset,
-                # batch_size=self._gait_cycle_batch_size,
-                batch_size=16,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=True,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-            )
-        else:
-            val_data_loader = DataLoader(
-                self.val_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-            )
+        val_data_loader = DataLoader(
+            self.val_gait_dataset,
+            batch_size=self._default_batch_size,
+            num_workers=self._NUM_WORKERS,
+            pin_memory=True,
+            shuffle=True,
+            drop_last=True,
+            collate_fn=self.collate_fn,
+        )
 
         return val_data_loader
 
