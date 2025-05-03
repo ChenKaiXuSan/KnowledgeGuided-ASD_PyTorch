@@ -79,6 +79,11 @@ class ATN3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
+        if b > 50:
+            video = video[:50]
+            raw_attn_map = raw_attn_map[:50]
+            label = label[:50]
+
         attn_video = video * raw_attn_map  # b, c, t, h, w
 
         att_opt, per_opt, gen_att_map = self.resnet_atn(attn_video)
