@@ -70,7 +70,6 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         labeled_video_paths: list[Tuple[str, Optional[dict]]],
         clip_duration: int = 1,
         ) -> list[Tuple[str, Optional[dict]]]:
-        # TODO: 希望这边按照s来进行batch的准备。目前每个是按照视频的长度来进行准备的
 
         index_map = []
         video_infos = {}
@@ -81,29 +80,24 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             with open(one_video) as f:
                 file_info_dict = json.load(f)
 
-            # load video info from json file
-            video_name = file_info_dict["video_name"]
-            video_path = file_info_dict["video_path"]
+            fps = 30 
 
-            vframes, _, info = read_video(video_path, output_format="TCHW", pts_unit="sec")
-
-            fps = int(info["video_fps"])
-
-            label = file_info_dict["label"]
-            disease = file_info_dict["disease"]
             frame_count = file_info_dict["frame_count"]
-            gait_cycle_index = file_info_dict["gait_cycle_index"]
             bbox_none_index = file_info_dict["none_index"]
-            bbox = file_info_dict["bbox"]
 
             # calc clip duration
             for i in range(0, frame_count, clip_duration * fps):
+                
+                if i + clip_duration * fps > frame_count:
+                    duration_end = frame_count
+                else:
+                    duration_end = i + clip_duration * fps
 
                 video_infos =  {
                     "video_name": file_info_dict["video_name"],
-                    "video_path": video_path,
+                    "video_path": file_info_dict["video_path"],
                     "duration_start": i,
-                    "duration_end": i + clip_duration * fps,
+                    "duration_end": duration_end,
                     "label": file_info_dict["label"],
                     "disease": file_info_dict["disease"],
                     # "gait_cycle_index": gait_cycle_index,
@@ -137,29 +131,21 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index) -> dict[str, Any]:
 
-        # load the video tensor from json file
-        with open(self._labeled_videos[index]) as f:
-            file_info_dict = json.load(f)
+        file_info_dict = self._index_map[index]
 
         # load video info from json file
         video_name = file_info_dict["video_name"]
         video_path = file_info_dict["video_path"]
 
-        try:
-            vframes, _, info = read_video(video_path, output_format="TCHW", pts_unit="sec")
-        except Exception as e:
-            _video_path = video_path.replace("/data/", "/dataset/")
-            vframes, _, _ = read_video(_video_path, output_format="TCHW")
-
-            logger.warning(
-                f"replace the video path {video_path} to {_video_path}, because of {e}"
-            )
-
+        vframes, _, info = read_video(video_path, output_format="TCHW", pts_unit="sec")
+    
         label = file_info_dict["label"]
         disease = file_info_dict["disease"]
-        gait_cycle_index = file_info_dict["gait_cycle_index"]
-        bbox_none_index = file_info_dict["none_index"]
-        bbox = file_info_dict["bbox"]
+        # gait_cycle_index = file_info_dict["gait_cycle_index"]
+        # bbox_none_index = file_info_dict["none_index"]
+        # bbox = file_info_dict["bbox"]
+        duration_start = file_info_dict["duration_start"]
+        duration_end = file_info_dict["duration_end"]
 
         attn_map = self.attn_map(
             video_name=video_name,
@@ -168,8 +154,8 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             vframes=vframes,
         )
 
-        transformed_vframes = self.move_transform(vframes, int(info["video_fps"]))
-        transformed_attn_map = self.move_transform(attn_map, int(info["video_fps"]))
+        transformed_vframes = self.move_transform(vframes[duration_start:duration_end], int(info["video_fps"]))
+        transformed_attn_map = self.move_transform(attn_map[duration_start:duration_end], int(info["video_fps"]))
 
         sample_info_dict = {
             "video": transformed_vframes,
@@ -178,7 +164,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             "disease": disease,
             "video_name": video_name,
             "video_index": index,
-            "bbox_none_index": bbox_none_index,
+            # "bbox_none_index": bbox_none_index,
         }
 
         return sample_info_dict
