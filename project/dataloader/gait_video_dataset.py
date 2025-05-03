@@ -67,9 +67,11 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
     def prepare_video_mapping_info(
         self,
-        labeled_video_paths: list[Tuple[str, Optional[dict]]],
+        labeled_video_paths: list[str],
         clip_duration: int = 1,
-        ) -> list[Tuple[str, Optional[dict]]]:
+        ) -> list[dict[str, Any]]:
+
+        logger.info("Preparing video mapping info...")
 
         index_map = []
         video_infos = {}
@@ -107,6 +109,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
                 index_map.append(video_infos)
 
+        logger.info("Finish preparing video mapping info...")
         return index_map
 
     def move_transform(self, vframes: torch.Tensor, fps: int) -> torch.Tensor:
