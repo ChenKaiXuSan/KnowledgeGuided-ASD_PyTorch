@@ -50,4 +50,4 @@ train:
   log_path: logs/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
-  fold: 5 # the fold number of the cross validation
+  fold: 2 # the fold number of the cross validation

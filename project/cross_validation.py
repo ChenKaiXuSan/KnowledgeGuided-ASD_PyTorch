@@ -307,7 +307,7 @@ class DefineCrossValidation(object):
     def multiprocess_func(self, fold_dataset_idx: dict) -> dict:
 
         # multi-process
-        with multiprocessing.Pool(processes=32) as pool:
+        with multiprocessing.Pool(processes=16) as pool:
             # process the video info
             video_path = pool.starmap(
                 self.make_dataset_with_video,
@@ -318,7 +318,7 @@ class DefineCrossValidation(object):
             pool.join()
 
         # process the pt info
-        with multiprocessing.Pool(processes=32) as pool:
+        with multiprocessing.Pool(processes=16) as pool:
             pt_path = pool.starmap(
                 self.merge_to_pt,
                 [(v[0], k, "train") for k, v in fold_dataset_idx.items()]
