@@ -62,8 +62,6 @@ class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
 
-        # ? 感觉batch size对最后的结果有影响，所以分开使用不同的batch size
-        self._gait_cycle_batch_size = opt.data.gait_cycle_batch_size
         self._default_batch_size = opt.data.default_batch_size
 
         self._NUM_WORKERS = opt.data.num_workers
