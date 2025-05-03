@@ -161,10 +161,6 @@ class DefineCrossValidation(object):
             if not (temp_path / video_disease).exists():
                 (temp_path / video_disease).mkdir(parents=True, exist_ok=False)
 
-            video_path = video_path.replace(
-                "/data/", "/dataset/"
-            )  # the video path in the json file
-
             shutil.copy(video_path, temp_path / video_disease / (video_name + ".mp4"))
 
         return temp_path
