@@ -129,19 +129,18 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         ckpt_path="best",
     )
 
-    # TODO: this step move to trainer.test() method.
-    # if hparams.train.backbone == "3dcnn_atn":
-    #     pass
-    # else:
-    #     # save_helper(hparams, classification_module, data_module, fold) #! debug only
-    #     save_helper(
-    #         hparams,
-    #         classification_module.load_from_checkpoint(
-    #             trainer.checkpoint_callback.best_model_path
-    #         ),
-    #         data_module,
-    #         fold,
-    #     )
+    # ! debug only
+
+
+#     # save_helper(hparams, classification_module, data_module, fold)
+#     save_helper(
+#         hparams,
+#         classification_module.load_from_checkpoint(
+#             trainer.checkpoint_callback.best_model_path
+#         ),
+#         data_module,
+#         fold,
+#     )
 
 
 @hydra.main(

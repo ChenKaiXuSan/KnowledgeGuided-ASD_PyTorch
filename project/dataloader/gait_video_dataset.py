@@ -51,6 +51,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         super().__init__()
 
         self._transform = transform
+        # TODO: here should be changed.
         # self._labeled_videos = labeled_video_paths
         self._index_map = self.prepare_video_mapping_info(
             labeled_video_paths=labeled_video_paths,

@@ -15,7 +15,7 @@ data:
   root_path: /workspace/data/pose_attn_map_dataset # this is the root path of dataset.
 
   data_info_path: ${data.root_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
-  skeleton_path: ${data.root_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
+  skeleton_path: ${data.root_path}/seg_skeleton_pkl/whole_annotations.pkl # skeleton path, this used for cross validation, with different class number.
   doctor_results_path: ${data.root_path}/doctor_result # doctor results path, this used for cross validation, with different class number.
 
   index_mapping: ${data.root_path}/index_mapping # training mapping path, this used for cross validation, with different class number.

@@ -22,9 +22,17 @@ Date      	By	Comments
 22-03-2024	Kaixu Chen	add different class number mapping, and add the cross validation process.
 """
 
-
-import os, json, shutil, copy, random
+import os, json, shutil, copy
+import pandas as pd
 from typing import Any, Dict, List, Tuple
+
+import torch
+from torchvision.io import read_video
+import logging
+
+import multiprocessing
+from tqdm import tqdm
+
 
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
@@ -47,10 +55,12 @@ class DefineCrossValidation(object):
     """
 
     def __init__(self, config) -> None:
-
         self.video_path: Path = Path(config.data.data_info_path)  # json file path
         self.gait_seg_idx_path: Path = Path(
             config.data.index_mapping
+        )  # used for training path mapping
+        self.skeleton_path: Path = Path(
+            config.data.skeleton_path
         )  # used for training path mapping
 
         self.K: int = config.train.fold
@@ -88,7 +98,6 @@ class DefineCrossValidation(object):
         return train_mapped_path, val_mapped_path
 
     def process_cross_validation(self, video_dict: dict) -> Tuple[List, List, List]:
-
         _path = video_dict
 
         X = []  # patient index
@@ -109,7 +118,8 @@ class DefineCrossValidation(object):
 
             for p in patient_list:
                 name, _ = p.name.split("-")
-                #  FIXME: 我觉得HipOA是造成数据不平衡的原因，所以我把HipOA的数据去掉了
+
+                # * here remove the HipOA data
                 if "HipOA" not in name:
                     name_map.add(name)
 
@@ -118,17 +128,25 @@ class DefineCrossValidation(object):
 
         for disease, path in _path.items():
             patient_list = sorted(list(path))
-            for i in range(len(patient_list)):
+            # for i in range(len(patient_list)):
 
-                name, _ = patient_list[i].name.split("-")
+            #     name, _ = patient_list[i].name.split("-")
 
-                label = disease_to_num[disease]
+            #     label = disease_to_num[disease]
 
-                # FIXME: 我举得HipOA是造成数据不平衡的原因，所以我把HipOA的数据去掉了
+            #     # * here remove the HipOA data
+            #     if "HipOA" not in name:
+            #         X.append(patient_list[i])  # true path in Path
+            #         y.append(label)  # label, 0, 1, 2
+            #         groups.append(element_to_num[name])  # number of different patient
+
+            for one_person in patient_list:
+                name, _ = one_person.name.split("-")
+                # * here remove the HipOA data
                 if "HipOA" not in name:
-                    X.append(patient_list[i])  # true path in Path
-                    y.append(label)  # label, 0, 1, 2
-                    groups.append(element_to_num[name])  # number of different patient
+                    X.append(one_person)
+                    y.append(disease_to_num[disease])
+                    groups.append(element_to_num[name])
 
         return X, y, groups
 
@@ -137,6 +155,7 @@ class DefineCrossValidation(object):
             self.gait_seg_idx_path
             / str(self.class_num)
             / self.sampler
+            / "video"
             / str(fold)
             / str(flag)
         )
@@ -161,17 +180,12 @@ class DefineCrossValidation(object):
             if not (temp_path / video_disease).exists():
                 (temp_path / video_disease).mkdir(parents=True, exist_ok=False)
 
-            video_path = video_path.replace(
-                "/data/", "/dataset/"
-            )  # the video path in the json file
-
             shutil.copy(video_path, temp_path / video_disease / (video_name + ".mp4"))
 
         return temp_path
 
     @staticmethod
     def magic_move(train_mapped_path, val_mapped_path):
-
         new_train_mapped_path = copy.deepcopy(train_mapped_path)
         new_val_mapped_path = copy.deepcopy(val_mapped_path)
 
@@ -207,15 +221,12 @@ class DefineCrossValidation(object):
 
     @staticmethod
     def map_class_num(class_num: int, raw_video_path: Path) -> Dict:
-
         _class_num = class_num_mapping_Dict[class_num]
 
         res_dict = {v: [] for k, v in _class_num.items()}
 
         for disease in raw_video_path.iterdir():
-
             for one_json_file in disease.iterdir():
-
                 if disease.name in res_dict.keys():
                     res_dict[disease.name].append(one_json_file)
                 elif disease.name == "log":
@@ -244,8 +255,8 @@ class DefineCrossValidation(object):
         mapped_class_Dict = self.map_class_num(self.class_num, self.video_path)
 
         # define the cross validation
-        # X: video path, in path.Path foramt. len = 1954
-        # y: label, in list format. len = 1954, type defined by class_num_mapping_Dict.
+        # X: video path, in path.Path foramt. len = 1954 > 1890, not include the HipOA.
+        # y: label, in list format. len = 1954 > 1890, type defined by class_num_mapping_Dict.
         # groups: different patient, in list format. It means unique patient index. [54]
         X, y, groups = self.process_cross_validation(mapped_class_Dict)
 
@@ -273,43 +284,165 @@ class DefineCrossValidation(object):
                 train_mapped_path, val_mapped_path
             )
 
-            # TODO: here merge the multi info into one .pt file.
+            # # merge the keypoint and duration start/end time to one .pt file.
+            # train_mapped_path = self.merge_to_pt(train_mapped_path, i, "train")
+            # val_mapped_path = self.merge_to_pt(val_mapped_path, i, "val")
 
-            # make the val data path
-            train_video_path = self.make_dataset_with_video(
-                train_mapped_path, i, "train"
-            )
-            val_video_path = self.make_dataset_with_video(val_mapped_path, i, "val")
+            # # make the val data path
+            # train_video_path = self.make_dataset_with_video(
+            #     train_mapped_path, i, "train"
+            # )
+            # val_video_path = self.make_dataset_with_video(val_mapped_path, i, "val")
 
             # * here used for gait labeled method, or load video from path
             ans_fold[i] = [
                 train_mapped_path,
                 val_mapped_path,
-                train_video_path,
-                val_video_path,
             ]
 
-        return ans_fold, X, y, groups
+        ans_fold_path = self.multiprocess_func(ans_fold)
+
+        return ans_fold_path, ans_fold, X, y, groups
+
+    def multiprocess_func(self, fold_dataset_idx: dict) -> dict:
+
+        # multi-process
+        with multiprocessing.Pool(processes=32) as pool:
+            # process the video info
+            video_path = pool.starmap(
+                self.make_dataset_with_video,
+                [(v[0], k, "train") for k, v in fold_dataset_idx.items()]
+                + [(v[1], k, "val") for k, v in fold_dataset_idx.items()],
+            )
+            pool.close()
+            pool.join()
+
+        # process the pt info
+        with multiprocessing.Pool(processes=32) as pool:
+            pt_path = pool.starmap(
+                self.merge_to_pt,
+                [(v[0], k, "train") for k, v in fold_dataset_idx.items()]
+                + [(v[1], k, "val") for k, v in fold_dataset_idx.items()],
+            )
+            pool.close()
+            pool.join()
+
+        return {
+            "video_path": video_path,
+            "pt_path": pt_path,
+        }
+
+    def merge_to_pt(self, video_path: list[Path], fold: int, flag: str) -> Path:
+        """merge the video info and skeleton info to one .pt file.
+        The video info include the video name, video path, duration start and end time, label, disease, fps, frame count.
+        The skeleton info include the keypoint and keypoint score.
+
+        Args:
+            video_path (list[Path]): the video path, in .json format.
+            fold (int): the fold number.
+            flag (str): the flag, train or val.
+
+        Returns:
+            Path: the path of the merged .pt file.
+        """
+
+        temp_path = (
+            self.gait_seg_idx_path
+            / str(self.class_num)
+            / self.sampler
+            / "info"
+            / str(fold)
+            / str(flag)
+        )
+
+        skeleton = pd.read_pickle(self.skeleton_path)
+
+        # load the video info
+        for one_video in video_path:
+            with open(one_video) as f:
+                file_info_dict = json.load(f)
+
+            video_name = file_info_dict["video_name"]
+            video_path = file_info_dict["video_path"]
+            video_disease = file_info_dict["disease"]
+
+            vframes, _, info = read_video(
+                video_path, pts_unit="sec", output_format="TCHW"
+            )
+
+            # load the skeleton info with the video name
+            for one in skeleton["annotations"]:
+                keypoint = one["keypoint"]
+                keypoint_score = one["keypoint_score"]
+                total_frame = one["total_frames"]
+                _video_name = one["frame_dir"].split("/")[-1]
+
+                if video_name in _video_name:
+                    assert (
+                        keypoint.shape[1] == vframes.shape[0]
+                    ), "the keypoint shape is not correct, please check the keypoint shape."
+
+                    # get the keypoint and keypoint score
+                    keypoint = torch.tensor(keypoint)
+                    keypoint_score = torch.tensor(keypoint_score)
+
+            assert (
+                keypoint.shape[0] == 1
+            ), "the keypoint shape is not correct, please check the keypoint shape."
+
+            t, c, h, w = vframes.shape
+
+            fps = int(info["video_fps"])
+
+            # calc the duration start and end time
+            for f in range(0, t, self.clip_duration * fps):
+                if f + self.clip_duration * fps > t:
+                    duration_end = t
+                else:
+                    duration_end = f + self.clip_duration * fps
+
+                one_video_info = {
+                    "vframes": vframes[f:duration_end, ...].permute(1, 0, 2, 3),
+                    "video_name": video_name,
+                    "video_path": video_path,
+                    "duration_start": f,
+                    "duration_end": duration_end,
+                    "label": file_info_dict["label"],
+                    "disease": video_disease,
+                    "fps": fps,
+                    "frame_count": len(vframes),
+                    "keypoint": keypoint[0, f:duration_end, ...],
+                    "keypoint_score": keypoint_score[0, f:duration_end, ...],
+                }
+
+                # save the video info to .pt file
+                if not (temp_path / video_disease).exists():
+                    (temp_path / video_disease).mkdir(parents=True, exist_ok=False)
+                torch.save(
+                    one_video_info,
+                    temp_path
+                    / video_disease
+                    / (video_name + "_" + str(f) + "_" + str(duration_end) + ".pt"),
+                )
+
+        return temp_path
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-
         target_path = self.gait_seg_idx_path / str(self.class_num) / self.sampler
 
         # * when json file changed, need to reprocess the dataset.
         if not os.path.exists(target_path):
-
             fold_dataset_idx, *_ = self.prepare()
 
             json_fold_dataset_idx = copy.deepcopy(fold_dataset_idx)
 
             for k, v in fold_dataset_idx.items():
-
                 # train mapping path, include the gait cycle index
                 train_mapping_idx = v[0]
-                json_fold_dataset_idx[k][0] = [str(i) for i in train_mapping_idx]
+                json_fold_dataset_idx[k][0] = str(train_mapping_idx)
 
                 val_mapping_idx = v[1]
-                json_fold_dataset_idx[k][1] = [str(i) for i in val_mapping_idx]
+                json_fold_dataset_idx[k][1] = str(val_mapping_idx)
 
                 # train video path
                 train_video_idx = v[2]
@@ -320,12 +453,7 @@ class DefineCrossValidation(object):
                 json_fold_dataset_idx[k][3] = str(val_dataset_idx)
 
             with open(
-                (
-                    self.gait_seg_idx_path
-                    / str(self.class_num)
-                    / self.sampler
-                    / "index.json"
-                ),
+                (target_path / "index.json"),
                 "w",
             ) as f:
                 json.dump(json_fold_dataset_idx, f, sort_keys=True, indent=4)
@@ -338,11 +466,11 @@ class DefineCrossValidation(object):
             for k, v in fold_dataset_idx.items():
                 # train mapping, include the gait cycle index
                 train_mapping_idx = v[0]
-                fold_dataset_idx[k][0] = [Path(i) for i in train_mapping_idx]
+                fold_dataset_idx[k][0] = Path(train_mapping_idx)
 
                 # val mapping, include the gait cycle index
                 val_mapping_idx = v[1]
-                fold_dataset_idx[k][1] = [Path(i) for i in val_mapping_idx]
+                fold_dataset_idx[k][1] = Path(val_mapping_idx)
 
                 # train video path
                 train_video_idx = v[2]
