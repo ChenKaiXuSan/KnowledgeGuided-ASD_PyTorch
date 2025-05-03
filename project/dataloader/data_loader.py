@@ -154,6 +154,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 skeleton_path=self._skeleton_path,
                 doctor_res_path=self._doctor_res_path,
+                clip_duration=self._CLIP_DURATION,
             )
 
             # val dataset
@@ -165,6 +166,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 doctor_res_path=self._doctor_res_path,
                 skeleton_path=self._skeleton_path,
+                clip_duration=self._CLIP_DURATION,
             )
 
             # test dataset
@@ -176,6 +178,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 doctor_res_path=self._doctor_res_path,
                 skeleton_path=self._skeleton_path,
+                clip_duration=self._CLIP_DURATION,
             )
 
         else:
@@ -305,24 +308,14 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._attn_map:
-            test_data_loader = DataLoader(
-                self.test_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-            )
-        else:
-            test_data_loader = DataLoader(
-                self.test_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-            )
-
+        test_data_loader = DataLoader(
+            self.test_gait_dataset,
+            batch_size=self._default_batch_size,
+            num_workers=self._NUM_WORKERS,
+            pin_memory=True,
+            shuffle=False,
+            drop_last=True,
+            collate_fn=self.collate_fn,
+        )
+ 
         return test_data_loader
