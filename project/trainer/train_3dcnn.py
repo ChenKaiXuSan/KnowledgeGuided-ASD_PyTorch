@@ -24,6 +24,7 @@ Date 	By 	Comments
 """
 
 from typing import Any, List, Optional, Union
+import logging
 
 import torch
 import torch.nn.functional as F
@@ -39,6 +40,7 @@ from torchmetrics.classification import (
 )
 
 from project.models.make_model import MakeVideoModule
+from project.helper import save_CM
 
 
 class Res3DCNNTrainer(LightningModule):
@@ -66,7 +68,6 @@ class Res3DCNNTrainer(LightningModule):
         return self.video_cnn(x)
 
     def training_step(self, batch: torch.Tensor, batch_idx: int):
-
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -108,11 +109,11 @@ class Res3DCNNTrainer(LightningModule):
             on_step=True,
             batch_size=b,
         )
-        print("train loss: ", loss.item())
+        logging.info(f"train loss: {loss.item()}")
+
         return loss
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int):
-
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -120,7 +121,7 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video + attn_map  # b, c, t, h, w
+        attn_video = video * attn_map  # b, c, t, h, w
 
         video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
@@ -154,10 +155,27 @@ class Res3DCNNTrainer(LightningModule):
             batch_size=b,
         )
 
-        print("val loss: ", loss.item())
+        logging.info(f"val loss: {loss.item()}")
 
-    def test_step(self, batch: torch.Tensor, batch_idx: int):
+    ##############
+    # test step
+    ##############
+    # the order of the hook function is:
+    # on_test_start -> test_step -> on_test_batch_end -> on_test_epoch_end -> on_test_end
 
+    def on_test_start(self) -> None:
+        """hook function for test start"""
+        self.test_outputs = []
+        self.test_pred_list = []
+        self.test_label_list = []
+
+        logging.info("test start")
+
+    def on_test_end(self) -> None:
+        """hook function for test end"""
+        logging.info("test end")
+
+    def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -165,7 +183,8 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h,
+        attn_video = video * attn_map  # b, c, t, h, w
+
         video_preds = self.video_cnn(attn_video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
@@ -186,25 +205,51 @@ class Res3DCNNTrainer(LightningModule):
         video_f1_score = self._f1_score(video_preds_softmax, label)
         video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
 
-        self.log_dict(
-            {
-                "test/video_acc": video_acc,
-                "test/video_precision": video_precision,
-                "test/video_recall": video_recall,
-                "test/video_f1_score": video_f1_score,
-            },
-            on_epoch=True,
-            on_step=True,
-            batch_size=b,
+        metric_dict = {
+            "test/video_acc": video_acc,
+            "test/video_precision": video_precision,
+            "test/video_recall": video_recall,
+            "test/video_f1_score": video_f1_score,
+        }
+        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=b)
+
+        return video_preds_softmax, video_preds
+
+    def on_test_batch_end(
+        self,
+        outputs: list[torch.Tensor],
+        batch: Any,
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
+        """hook function for test batch end
+
+        Args:
+            outputs (torch.Tensor | logging.Mapping[str, Any] | None): current output from batch.
+            batch (Any): the data of current batch.
+            batch_idx (int): the index of current batch.
+            dataloader_idx (int, optional): the index of all dataloader. Defaults to 0.
+        """
+
+        pred_softmax, pred = outputs
+        label = batch["label"].detach().float().squeeze()
+
+        self.test_outputs.append(outputs)
+        self.test_pred_list.append(pred_softmax)
+        self.test_label_list.append(label)
+
+    def on_test_epoch_end(self) -> None:
+        """hook function for test epoch end"""
+        # save confusion matrix
+        save_CM(
+            all_pred=self.test_pred_list,
+            all_label=self.test_label_list,
+            save_path=self.logger.root_dir,
+            num_class=self.num_classes,
+            fold=self.logger.save_dir.split("/")[-1],
         )
 
-        return {
-            "video_acc": video_acc,
-            "video_precision": video_precision,
-            "video_recall": video_recall,
-            "video_f1_score": video_f1_score,
-            "video_confusion_matrix": video_confusion_matrix,
-        }
+        logging.info("test epoch end")
 
     def configure_optimizers(self):
         """

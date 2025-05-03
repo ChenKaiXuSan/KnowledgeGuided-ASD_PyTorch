@@ -205,13 +205,12 @@ class ATN3DCNNTrainer(LightningModule):
                 ),
                 normalize=True,
             )
-            # fuse img 
+            # fuse img
             save_image(
                 fuse_video[i, :, 0, :, :],
                 os.path.join(save_pth, f"fuse_img_batch_{batch_idx}_person_{i}.png"),
                 normalize=True,
             )
-            
 
     ##############
     # test step
@@ -273,7 +272,7 @@ class ATN3DCNNTrainer(LightningModule):
         }
         self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=b)
 
-        return att_opt, per_opt, gen_att_map
+        return att_opt, video_preds_softmax, gen_att_map
 
     def on_test_batch_end(
         self,
@@ -301,11 +300,14 @@ class ATN3DCNNTrainer(LightningModule):
     def on_test_epoch_end(self) -> None:
         """hook function for test epoch end"""
         # save confusion matrix
-        save_CM(self.test_pred_list, self.test_label_list, self.num_classes)
-
-        # save CAM
-        # save_CAM(self.test_pred_list, self.test_label_list, self.num_classes)
-
+        save_CM(
+            all_pred=self.test_pred_list,
+            all_label=self.test_label_list,
+            save_path=self.logger.root_dir,
+            num_class=self.num_classes,
+            fold=self.logger.save_dir.split("/")[-1],
+        )
+        
         logging.info("test epoch end")
 
     def configure_optimizers(self):
