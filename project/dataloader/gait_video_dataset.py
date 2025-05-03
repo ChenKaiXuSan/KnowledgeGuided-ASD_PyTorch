@@ -48,7 +48,6 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         skeleton_path: str = None,
         clip_duration: int = 1,
     ) -> None:
-
         super().__init__()
 
         self._transform = transform
@@ -69,33 +68,30 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         self,
         labeled_video_paths: list[str],
         clip_duration: int = 1,
-        ) -> list[dict[str, Any]]:
-
+    ) -> list[dict[str, Any]]:
         logger.info("Preparing video mapping info...")
 
         index_map = []
         video_infos = {}
 
         for idx, one_video in enumerate(labeled_video_paths):
-            
             # load the video tensor from json file
             with open(one_video) as f:
                 file_info_dict = json.load(f)
 
-            fps = 30 
+            fps = 30
 
             frame_count = file_info_dict["frame_count"]
             bbox_none_index = file_info_dict["none_index"]
 
             # calc clip duration
             for i in range(0, frame_count, clip_duration * fps):
-                
                 if i + clip_duration * fps > frame_count:
                     duration_end = frame_count
                 else:
                     duration_end = i + clip_duration * fps
 
-                video_infos =  {
+                video_infos = {
                     "video_name": file_info_dict["video_name"],
                     "video_path": file_info_dict["video_path"],
                     "duration_start": i,
@@ -113,16 +109,14 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         return index_map
 
     def move_transform(self, vframes: torch.Tensor, fps: int) -> torch.Tensor:
+        t, c, h, w = vframes.shape
 
-        t, c, h, w = vframes.shape 
-
-        batch_res = [] 
+        batch_res = []
 
         for f in range(0, t, fps):
             one_sec_vframes = vframes[f : f + fps, :, :, :]
 
             if self._transform is not None:
-
                 transformed_img = self._transform(one_sec_vframes.permute(1, 0, 2, 3))
 
                 batch_res.append(transformed_img.permute(1, 0, 2, 3))  # c, t, h, w
@@ -133,15 +127,15 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         return torch.stack(batch_res, dim=0)  # b, c, t, h, w
 
     def __getitem__(self, index) -> dict[str, Any]:
-
         file_info_dict = self._index_map[index]
 
         # load video info from json file
         video_name = file_info_dict["video_name"]
         video_path = file_info_dict["video_path"]
 
+        # TODO: here will occur the io bottle.
         vframes, _, info = read_video(video_path, output_format="TCHW", pts_unit="sec")
-    
+
         label = file_info_dict["label"]
         disease = file_info_dict["disease"]
         # gait_cycle_index = file_info_dict["gait_cycle_index"]
@@ -157,8 +151,12 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             vframes=vframes,
         )
 
-        transformed_vframes = self.move_transform(vframes[duration_start:duration_end], int(info["video_fps"]))
-        transformed_attn_map = self.move_transform(attn_map[duration_start:duration_end], int(info["video_fps"]))
+        transformed_vframes = self.move_transform(
+            vframes[duration_start:duration_end], int(info["video_fps"])
+        )
+        transformed_attn_map = self.move_transform(
+            attn_map[duration_start:duration_end], int(info["video_fps"])
+        )
 
         sample_info_dict = {
             "video": transformed_vframes,
@@ -181,7 +179,6 @@ def labeled_gait_video_dataset(
     skeleton_path: str = "",
     clip_duration: int = 1,
 ) -> LabeledGaitVideoDataset:
-
     dataset = LabeledGaitVideoDataset(
         experiment=experiment,
         transform=transform,
