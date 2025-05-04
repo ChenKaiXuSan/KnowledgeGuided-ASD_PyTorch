@@ -31,7 +31,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
 import torch
 
-from torchvision.io import read_video, write_png
+from torchvision.io import read_video
 
 from project.dataloader.med_attn_map import MedAttnMap
 

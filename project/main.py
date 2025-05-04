@@ -46,6 +46,8 @@ from project.trainer.train_3dcnn_atn import ATN3DCNNTrainer
 
 from project.cross_validation import DefineCrossValidation
 
+logger = logging.getLogger(__name__)
+
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
     """the train process for the one fold.
@@ -156,9 +158,9 @@ def init_params(config):
 
     fold_dataset_idx = DefineCrossValidation(config)()
 
-    logging.info("#" * 50)
-    logging.info("Start train all fold")
-    logging.info("#" * 50)
+    logger.info("#" * 50)
+    logger.info("Start train all fold")
+    logger.info("#" * 50)
 
     #########
     # K fold
@@ -166,15 +168,15 @@ def init_params(config):
     # * for one fold, we first train/val model, then save the best ckpt preds/label into .pt file.
 
     for fold, dataset_value in fold_dataset_idx.items():
-        logging.info("#" * 50)
-        logging.info("Start train fold: {}".format(fold))
-        logging.info("#" * 50)
+        logger.info("#" * 50)
+        logger.info(f"Start train fold: {fold}")
+        logger.info("#" * 50)
 
         train(config, dataset_value, fold)
 
-        logging.info("#" * 50)
-        logging.info("finish train fold: {}".format(fold))
-        logging.info("#" * 50)
+        logger.info("#" * 50)
+        logger.info(f"finish train fold: {fold}")
+        logger.info("#" * 50)
 
     logging.info("#" * 50)
     logging.info("finish train all fold")

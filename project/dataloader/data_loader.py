@@ -35,8 +35,6 @@ from torchvision.transforms import (
 from typing import Any, Callable, Dict, Optional
 from pytorch_lightning import LightningDataModule
 
-from omegaconf import OmegaConf
-
 import torch
 from torch.utils.data import DataLoader
 
@@ -64,11 +62,11 @@ class WalkDataModule(LightningDataModule):
 
         self._default_batch_size = opt.data.default_batch_size
 
-        self._NUM_WORKERS = opt.data.num_workers
-        self._IMG_SIZE = opt.data.img_size
+        self._num_workers = opt.data.num_workers
+        self._img_size = opt.data.img_size
 
         # frame rate
-        self._CLIP_DURATION = opt.train.clip_duration
+        self._clip_duration = opt.train.clip_duration
         self.uniform_temporal_subsample_num = opt.train.uniform_temporal_subsample_num
 
         # * this is the dataset idx, which include the train/val dataset idx.
@@ -87,7 +85,7 @@ class WalkDataModule(LightningDataModule):
             [
                 UniformTemporalSubsample(self.uniform_temporal_subsample_num),
                 Div255(),
-                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                Resize(size=[self._img_size, self._img_size]),
             ]
         )
 
@@ -98,7 +96,7 @@ class WalkDataModule(LightningDataModule):
                     transform=Compose(
                         [
                             Div255(),
-                            Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                            Resize(size=[self._img_size, self._img_size]),
                             UniformTemporalSubsample(
                                 self.uniform_temporal_subsample_num
                             ),
@@ -115,7 +113,7 @@ class WalkDataModule(LightningDataModule):
                     transform=Compose(
                         [
                             Div255(),
-                            Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                            Resize(size=[self._img_size, self._img_size]),
                             UniformTemporalSubsample(
                                 self.uniform_temporal_subsample_num
                             ),
@@ -152,7 +150,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 skeleton_path=self._skeleton_path,
                 doctor_res_path=self._doctor_res_path,
-                clip_duration=self._CLIP_DURATION,
+                clip_duration=self._clip_duration,
             )
 
             # val dataset
@@ -164,7 +162,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 doctor_res_path=self._doctor_res_path,
                 skeleton_path=self._skeleton_path,
-                clip_duration=self._CLIP_DURATION,
+                clip_duration=self._clip_duration,
             )
 
             # test dataset
@@ -176,7 +174,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
                 doctor_res_path=self._doctor_res_path,
                 skeleton_path=self._skeleton_path,
-                clip_duration=self._CLIP_DURATION,
+                clip_duration=self._clip_duration,
             )
 
         else:
@@ -184,21 +182,21 @@ class WalkDataModule(LightningDataModule):
             # train dataset
             self.train_gait_dataset = labeled_video_dataset(
                 data_path=self._dataset_idx[2],
-                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                clip_sampler=make_clip_sampler("uniform", self._clip_duration),
                 transform=self.train_video_transform,
             )
 
             # val dataset
             self.val_gait_dataset = labeled_video_dataset(
                 data_path=self._dataset_idx[3],
-                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                clip_sampler=make_clip_sampler("uniform", self._clip_duration),
                 transform=self.val_video_transform,
             )
 
             # test dataset
             self.test_gait_dataset = labeled_video_dataset(
                 data_path=self._dataset_idx[3],
-                clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
+                clip_sampler=make_clip_sampler("uniform", self._clip_duration),
                 transform=self.val_video_transform,
             )
 
@@ -258,17 +256,16 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._attn_map:
-            train_data_loader = DataLoader(
-                self.train_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=True,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-            )
-        
+        train_data_loader = DataLoader(
+            self.train_gait_dataset,
+            batch_size=self._default_batch_size,
+            num_workers=self._num_workers,
+            pin_memory=True,
+            shuffle=True,
+            drop_last=True,
+            collate_fn=self.collate_fn,  # FIXME: the collate_fn can be removed, because the dataset already have the collate_fn.
+        )
+
         return train_data_loader
 
     def val_dataloader(self) -> DataLoader:
@@ -281,7 +278,7 @@ class WalkDataModule(LightningDataModule):
         val_data_loader = DataLoader(
             self.val_gait_dataset,
             batch_size=self._default_batch_size,
-            num_workers=self._NUM_WORKERS,
+            num_workers=self._num_workers,
             pin_memory=True,
             shuffle=False,
             drop_last=True,
@@ -300,11 +297,11 @@ class WalkDataModule(LightningDataModule):
         test_data_loader = DataLoader(
             self.test_gait_dataset,
             batch_size=self._default_batch_size,
-            num_workers=self._NUM_WORKERS,
+            num_workers=self._num_workers,
             pin_memory=True,
             shuffle=False,
             drop_last=True,
             collate_fn=self.collate_fn,
         )
- 
+
         return test_data_loader
