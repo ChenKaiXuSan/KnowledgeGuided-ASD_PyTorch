@@ -41,7 +41,8 @@ from torch.utils.data import DataLoader
 from pytorchvideo.data import make_clip_sampler
 from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
 
-from project.dataloader.gait_video_dataset import labeled_gait_video_dataset
+from project.dataloader.whole_video_dataset import whole_video_dataset
+from project.dataloader.batch_video_dataset import batch_video_dataset
 
 from project.dataloader.utils import (
     Div255,
@@ -142,7 +143,7 @@ class WalkDataModule(LightningDataModule):
         if self._attn_map:
 
             # train dataset
-            self.train_gait_dataset = labeled_gait_video_dataset(
+            self.train_gait_dataset = whole_video_dataset(
                 experiment=self._experiment,
                 dataset_idx=self._dataset_idx[
                     0
@@ -154,7 +155,7 @@ class WalkDataModule(LightningDataModule):
             )
 
             # val dataset
-            self.val_gait_dataset = labeled_gait_video_dataset(
+            self.val_gait_dataset = whole_video_dataset(
                 experiment=self._experiment,
                 dataset_idx=self._dataset_idx[
                     1
@@ -166,7 +167,7 @@ class WalkDataModule(LightningDataModule):
             )
 
             # test dataset
-            self.test_gait_dataset = labeled_gait_video_dataset(
+            self.test_gait_dataset = whole_video_dataset(
                 experiment=self._experiment,
                 dataset_idx=self._dataset_idx[
                     1
