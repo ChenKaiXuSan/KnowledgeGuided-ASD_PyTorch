@@ -34,7 +34,7 @@ model:
 
 train:
   # Training config
-  max_epochs: 50 # numer of epochs of training
+  max_epochs: 20 # numer of epochs of training
 
   # used for val 
   clip_duration: 1 # clip duration for the video

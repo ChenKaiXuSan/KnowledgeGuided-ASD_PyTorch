@@ -122,6 +122,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             # "bbox_none_index": bbox_none_index,
         }
 
+        logger.info(f"the video name is {video_name}")
         logger.info(f"the batch size is {transformed_vframes.shape}")
 
         return sample_info_dict

@@ -116,7 +116,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             progress_bar,
             rich_model_summary,
             model_check_point,
-            early_stopping,
+            # early_stopping,
             lr_monitor,
         ],
         fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
@@ -124,12 +124,13 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     trainer.fit(classification_module, data_module)
 
+    # FIXME: the best model path is not correct.
     # the validate method will wirte in the same log twice, so use the test method.
-    trainer.test(
-        classification_module,
-        data_module,
-        ckpt_path="best",
-    )
+    # trainer.test(
+    #     classification_module,
+    #     data_module,
+    #     ckpt_path="best",
+    # )
 
     # TODO: this step move to trainer.test() method.
     # if hparams.train.backbone == "3dcnn_atn":
