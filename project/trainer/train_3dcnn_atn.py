@@ -182,8 +182,13 @@ class ATN3DCNNTrainer(LightningModule):
 
         save_pth = os.path.join(self.logger.root_dir, "imgs")
 
-        for i in range(2):
+        b, c, t, h, w = video.shape
 
+        for i in range(b):
+            
+            if i >= 2: 
+                break
+            
             # img
             _pth = os.path.join(save_pth, "raw_img")
             if not os.path.exists(_pth):
