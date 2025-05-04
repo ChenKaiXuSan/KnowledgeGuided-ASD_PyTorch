@@ -32,7 +32,6 @@ import torch
 import torch.nn.functional as F
 from torchvision.utils import save_image
 
-from project.models.make_model import ATN3DCNN
 
 from pytorch_lightning import LightningModule
 
@@ -44,7 +43,10 @@ from torchmetrics.classification import (
     MulticlassConfusionMatrix,
 )
 
+from project.models.make_model import ATN3DCNN
 from project.helper import save_CM
+
+logger = logging.getLogger(__name__)
 
 
 class ATN3DCNNTrainer(LightningModule):
@@ -114,7 +116,8 @@ class ATN3DCNNTrainer(LightningModule):
             on_step=True,
             batch_size=b,
         )
-        logging.info(f"train loss: {loss.item()}")
+        logger.info(f"train loss: {loss.item()}")
+
         return loss
 
     def validation_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
@@ -163,7 +166,7 @@ class ATN3DCNNTrainer(LightningModule):
             batch_size=b,
         )
 
-        logging.info(f"val loss: {loss.item()}")
+        logger.info(f"val loss: {loss.item()}")
 
         # save imgs
         self.save_images(video, raw_attn_map, gen_att_map, attn_video, batch_idx)
@@ -179,36 +182,42 @@ class ATN3DCNNTrainer(LightningModule):
 
         save_pth = os.path.join(self.logger.root_dir, "imgs")
 
-        if not os.path.exists(save_pth):
-            os.makedirs(save_pth)
-
         for i in range(2):
+
             # img
+            _pth = os.path.join(save_pth, "raw_img")
+            if not os.path.exists(_pth):
+                os.makedirs(_pth)
             save_image(
                 video[i, :, 0, :, :],
-                os.path.join(save_pth, f"raw_img_batch_{batch_idx}_person_{i}.png"),
+                os.path.join(_pth, f"batch_{batch_idx}_person_{i}.png"),
                 normalize=True,
             )
             # raw attn map
+            _pth = os.path.join(save_pth, "raw_attn_map")
+            if not os.path.exists(_pth):
+                os.makedirs(_pth)
             save_image(
                 raw_attn_map[i, :, 0, :, :],
-                os.path.join(
-                    save_pth, f"raw_attn_map_batch_{batch_idx}_person_{i}.png"
-                ),
+                os.path.join(_pth, f"batch_{batch_idx}_person_{i}.png"),
                 normalize=True,
             )
             # gen attn map
+            _pth = os.path.join(save_pth, "gen_attn_map")
+            if not os.path.exists(_pth):
+                os.makedirs(_pth)
             save_image(
                 gen_attn_map[i, :, 0, :, :],
-                os.path.join(
-                    save_pth, f"gen_attn_map_batch_{batch_idx}_person_{i}.png"
-                ),
+                os.path.join(_pth, f"batch_{batch_idx}_person_{i}.png"),
                 normalize=True,
             )
             # fuse img
+            _pth = os.path.join(save_pth, "fuse_img")
+            if not os.path.exists(_pth):
+                os.makedirs(_pth)
             save_image(
                 fuse_video[i, :, 0, :, :],
-                os.path.join(save_pth, f"fuse_img_batch_{batch_idx}_person_{i}.png"),
+                os.path.join(_pth, f"batch_{batch_idx}_person_{i}.png"),
                 normalize=True,
             )
 
@@ -224,11 +233,11 @@ class ATN3DCNNTrainer(LightningModule):
         self.test_pred_list = []
         self.test_label_list = []
 
-        logging.info("test start")
+        logger.info("test start")
 
     def on_test_end(self) -> None:
         """hook function for test end"""
-        logging.info("test end")
+        logger.info("test end")
 
     def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
 
@@ -307,8 +316,8 @@ class ATN3DCNNTrainer(LightningModule):
             num_class=self.num_classes,
             fold=self.logger.save_dir.split("/")[-1],
         )
-        
-        logging.info("test epoch end")
+
+        logger.info("test epoch end")
 
     def configure_optimizers(self):
         """

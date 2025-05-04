@@ -42,6 +42,8 @@ from torchmetrics.classification import (
 from project.models.make_model import MakeVideoModule
 from project.helper import save_CM
 
+logger = logging.getLogger(__name__)
+
 
 class Res3DCNNTrainer(LightningModule):
     def __init__(self, hparams):
@@ -67,7 +69,7 @@ class Res3DCNNTrainer(LightningModule):
     def forward(self, x):
         return self.video_cnn(x)
 
-    def training_step(self, batch: torch.Tensor, batch_idx: int):
+    def training_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -109,11 +111,11 @@ class Res3DCNNTrainer(LightningModule):
             on_step=True,
             batch_size=b,
         )
-        logging.info(f"train loss: {loss.item()}")
+        logger.info(f"train loss: {loss.item()}")
 
         return loss
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int):
+    def validation_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
@@ -155,7 +157,7 @@ class Res3DCNNTrainer(LightningModule):
             batch_size=b,
         )
 
-        logging.info(f"val loss: {loss.item()}")
+        logger.info(f"val loss: {loss.item()}")
 
     ##############
     # test step
@@ -165,15 +167,15 @@ class Res3DCNNTrainer(LightningModule):
 
     def on_test_start(self) -> None:
         """hook function for test start"""
-        self.test_outputs = []
-        self.test_pred_list = []
-        self.test_label_list = []
+        self.test_outputs: list[torch.Tensor] = []
+        self.test_pred_list: list[torch.Tensor] = []
+        self.test_label_list: list[torch.Tensor] = []
 
-        logging.info("test start")
+        logger.info("test start")
 
     def on_test_end(self) -> None:
         """hook function for test end"""
-        logging.info("test end")
+        logger.info("test end")
 
     def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
         # input and model define
@@ -249,7 +251,7 @@ class Res3DCNNTrainer(LightningModule):
             fold=self.logger.save_dir.split("/")[-1],
         )
 
-        logging.info("test epoch end")
+        logger.info("test epoch end")
 
     def configure_optimizers(self):
         """
