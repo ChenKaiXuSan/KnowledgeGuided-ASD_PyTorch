@@ -19,6 +19,8 @@ HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
 
+04-05-2025	Kaixu Chen	load the video as batch, this will save the CPU memory.
+
 23-04-2025	Kaixu Chen	init the code.
 """
 
@@ -27,7 +29,7 @@ from __future__ import annotations
 import logging
 import json
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import torch
 
@@ -44,9 +46,8 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         experiment: str,
         labeled_video_paths: list[Tuple[str, Optional[dict]]],
         transform: Optional[Callable[[dict], Any]] = None,
-        doctor_res_path: str = None,
-        skeleton_path: str = None,
-        clip_duration: int = 1,
+        doctor_res_path: str = "",
+        skeleton_path: str = "",
     ) -> None:
         super().__init__()
 
@@ -63,50 +64,6 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self._labeled_videos)
-
-    def prepare_video_mapping_info(
-        self,
-        labeled_video_paths: list[str],
-        clip_duration: int = 1,
-    ) -> list[dict[str, Any]]:
-        logger.info("Preparing video mapping info...")
-
-        index_map = []
-        video_infos = {}
-
-        for idx, one_video in enumerate(labeled_video_paths):
-            # load the video tensor from json file
-            with open(one_video) as f:
-                file_info_dict = json.load(f)
-
-            fps = 30
-
-            frame_count = file_info_dict["frame_count"]
-            bbox_none_index = file_info_dict["none_index"]
-
-            # calc clip duration
-            for i in range(0, frame_count, clip_duration * fps):
-                if i + clip_duration * fps > frame_count:
-                    duration_end = frame_count
-                else:
-                    duration_end = i + clip_duration * fps
-
-                video_infos = {
-                    "video_name": file_info_dict["video_name"],
-                    "video_path": file_info_dict["video_path"],
-                    "duration_start": i,
-                    "duration_end": duration_end,
-                    "label": file_info_dict["label"],
-                    "disease": file_info_dict["disease"],
-                    # "gait_cycle_index": gait_cycle_index,
-                    "bbox_none_index": bbox_none_index,
-                    # "bbox": bbox,
-                }
-
-                index_map.append(video_infos)
-
-        logger.info("Finish preparing video mapping info...")
-        return index_map
 
     def move_transform(self, vframes: torch.Tensor, fps: int) -> torch.Tensor:
 
@@ -173,7 +130,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 def whole_video_dataset(
     experiment: str,
     transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
-    dataset_idx: Dict = {},
+    dataset_idx: list = [],
     doctor_res_path: str = "",
     skeleton_path: str = "",
     clip_duration: int = 1,
@@ -184,7 +141,6 @@ def whole_video_dataset(
         labeled_video_paths=dataset_idx,
         doctor_res_path=doctor_res_path,
         skeleton_path=skeleton_path,
-        clip_duration=clip_duration,
     )
 
     return dataset
