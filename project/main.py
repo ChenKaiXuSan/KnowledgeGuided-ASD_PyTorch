@@ -96,7 +96,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # define the early stop.
     early_stopping = EarlyStopping(
         monitor="val/video_acc",
-        patience=3,
+        patience=5,
         mode="max",
     )
 
@@ -116,7 +116,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             progress_bar,
             rich_model_summary,
             model_check_point,
-            # early_stopping,
+            early_stopping,
             lr_monitor,
         ],
         fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
