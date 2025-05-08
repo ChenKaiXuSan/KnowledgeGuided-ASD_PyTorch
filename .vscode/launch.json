@@ -15,9 +15,8 @@
         "train.gpu=1",
         "train.clip_duration=1",
         "train.uniform_temporal_subsample_num=8",
-        "data.num_workers=2",
-        "data.gait_cycle_batch_size=1",
-        "data.default_batch_size=1",
+        "data.num_workers=0",
+        "model.fuse_method=add"
       ]
     },
   ]

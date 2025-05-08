@@ -42,7 +42,7 @@ from project.dataloader.data_loader import WalkDataModule
 #####################################
 
 from project.trainer.train_3dcnn import Res3DCNNTrainer
-from project.trainer.train_3dcnn_atn import ATN3DCNNTrainer
+from project.trainer.train_3dcnn_atn import 3DCNNATNTrainer
 
 from project.cross_validation import DefineCrossValidation
 
@@ -67,7 +67,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     if hparams.model.backbone == "3dcnn":
         classification_module = Res3DCNNTrainer(hparams)
     elif hparams.model.backbone == "3dcnnatn":
-        classification_module = ATN3DCNNTrainer(hparams)
+        classification_module = 3DCNNATNTrainer(hparams)
     else:
         raise ValueError("the experiment backbone is not supported.")
 
