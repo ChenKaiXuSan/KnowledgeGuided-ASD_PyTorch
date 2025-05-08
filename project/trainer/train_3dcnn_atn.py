@@ -43,13 +43,13 @@ from torchmetrics.classification import (
     MulticlassConfusionMatrix,
 )
 
-from project.models.make_model import ATN3DCNN
-from project.helper import save_CM
+from project.models.res_3dcnn_atn import Res3DCNNATN
+from project.helper import save_helper
 
 logger = logging.getLogger(__name__)
 
 
-class ATN3DCNNTrainer(LightningModule):
+class Res3DCNNATNTrainer(LightningModule):
     def __init__(self, hparams):
         super().__init__()
 
@@ -59,7 +59,7 @@ class ATN3DCNNTrainer(LightningModule):
         self.num_classes = hparams.model.model_class_num
 
         # define 3dcnn with ATN
-        self.resnet_atn = ATN3DCNN(hparams)
+        self.resnet_atn = Res3DCNNATN(hparams)
 
         self.save_hyperparameters()
 
@@ -80,16 +80,13 @@ class ATN3DCNNTrainer(LightningModule):
         label = batch["label"].detach().float().squeeze()  # b
 
         b, c, t, h, w = video.shape
-        
+
         if b > 20:
             video = video[:20, :, :, :, :]
             raw_attn_map = raw_attn_map[:20, :, :, :, :]
             label = label[:20]
 
-
-        attn_video = video * raw_attn_map  # b, c, t, h, w
-
-        att_opt, per_opt, gen_att_map = self.resnet_atn(attn_video)
+        att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
         if b == 1:
@@ -136,9 +133,7 @@ class ATN3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * raw_attn_map  # b, c, t, h, w
-
-        att_opt, per_opt, gen_att_map = self.resnet_atn(attn_video)
+        att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
         if b == 1:
@@ -160,7 +155,6 @@ class ATN3DCNNTrainer(LightningModule):
         video_precision = self._precision(video_preds_softmax, label)
         video_recall = self._recall(video_preds_softmax, label)
         video_f1_score = self._f1_score(video_preds_softmax, label)
-        video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
 
         self.log_dict(
             {
@@ -175,9 +169,6 @@ class ATN3DCNNTrainer(LightningModule):
         )
 
         logger.info(f"val loss: {loss.item()}")
-
-        # save imgs
-        self.save_images(video, raw_attn_map, gen_att_map, attn_video, batch_idx)
 
     def save_images(
         self,
@@ -242,9 +233,9 @@ class ATN3DCNNTrainer(LightningModule):
 
     def on_test_start(self) -> None:
         """hook function for test start"""
-        self.test_outputs = []
-        self.test_pred_list = []
-        self.test_label_list = []
+        self.test_outputs: list[torch.Tensor] = []
+        self.test_pred_list: list[torch.Tensor] = []
+        self.test_label_list: list[torch.Tensor] = []
 
         logger.info("test start")
 
@@ -261,9 +252,7 @@ class ATN3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * raw_attn_map  # b, c, t, h, w
-
-        att_opt, per_opt, gen_att_map = self.resnet_atn(attn_video)
+        att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
         if b == 1:
@@ -284,7 +273,6 @@ class ATN3DCNNTrainer(LightningModule):
         video_precision = self._precision(video_preds_softmax, label)
         video_recall = self._recall(video_preds_softmax, label)
         video_f1_score = self._f1_score(video_preds_softmax, label)
-        video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
 
         metric_dict = {
             "test/video_acc": video_acc,
@@ -293,6 +281,9 @@ class ATN3DCNNTrainer(LightningModule):
             "test/video_f1_score": video_f1_score,
         }
         self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=b)
+
+        # save imgs
+        self.save_images(video, raw_attn_map, gen_att_map, fused_ipt, batch_idx)
 
         return att_opt, video_preds_softmax, gen_att_map
 
@@ -322,12 +313,12 @@ class ATN3DCNNTrainer(LightningModule):
     def on_test_epoch_end(self) -> None:
         """hook function for test epoch end"""
         # save confusion matrix
-        save_CM(
+        save_helper(
             all_pred=self.test_pred_list,
             all_label=self.test_label_list,
-            save_path=self.logger.root_dir,
+            fold=self.logger.root_dir.split("/")[-1],
+            save_path=self.logger.save_dir,
             num_class=self.num_classes,
-            fold=self.logger.save_dir.split("/")[-1],
         )
 
         logger.info("test epoch end")

@@ -5,6 +5,9 @@ hydra:
   sweep:
     dir: /workspace/code/logs/
     subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweeper:
+    params:
+      model.fuse_method: add, mul, concat, none
 
 optimizer:
   lr: 0.0001
@@ -14,7 +17,7 @@ optimizer:
 data:
   root_path: /workspace/data/pose_attn_map_dataset # this is the root path of dataset.
 
-  data_info_path: ${data.root_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
+  data_info_path: ${data.root_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset.
   skeleton_path: ${data.root_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
   doctor_results_path: ${data.root_path}/doctor_result # doctor results path, this used for cross validation, with different class number.
 
@@ -24,26 +27,27 @@ data:
   img_size: 224
   sampling: "over" # over, under, none
 
-  gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
-  default_batch_size: 1  # this used for default method, without gait cycle defined method.
+  batch_size: 1 # this used for default method, without gait cycle defined method.
 
 model:
   backbone: 3dcnnatn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream, 3dcnn_atn], help='the backbone of the model'
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
+  fuse_method: add # add, mul, concat, none
+
 train:
   # Training config
   max_epochs: 20 # numer of epochs of training
 
-  # used for val 
+  # used for val
   clip_duration: 1 # clip duration for the video
   uniform_temporal_subsample_num: 8 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
 
   # experiment: two_stream, cnn_lstm, cnn, 3dcnn
   attn_map: True # if use the attention map
 
-  experiment: ${model.backbone}_attn_map_${train.attn_map} # the experiment name
+  experiment: ${model.backbone}_attn_map_${train.attn_map}_${model.fuse_method} # the experiment name
 
   gpu: 0 # choices=[0, 1], help='the gpu number whicht to train'
 

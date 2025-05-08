@@ -41,6 +41,9 @@ class MakeVideoModule(nn.Module):
         self.model_name = hparams.model.backbone
         self.model_class_num = hparams.model.model_class_num
         self.model_depth = hparams.model.model_depth
+        self.model = self.initialize_walk_resnet(self.model_class_num)
+
+        self.fuse_method = hparams.model.fuse_method
 
     def initialize_walk_resnet(self, input_channel: int = 3) -> nn.Module:
         slow = torch.hub.load(
@@ -66,6 +69,21 @@ class MakeVideoModule(nn.Module):
             return self.initialize_walk_resnet()
         else:
             raise KeyError(f"the model name {self.model_name} is not in the model zoo")
+
+    def forward(self, video: torch.Tensor, attn_map: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            video: (B, C, T, H, W)
+            attn_map: (B, 1, T, H, W)
+
+        Returns:
+            torch.Tensor: (B, C, T, H, W)
+        """
+        # video = self.video_cnn(video)
+        # attn_map = self.attn_map(attn_map)
+
+        # return video * attn_map
+        return video
 
 
 class ATN3DCNN(nn.Module):

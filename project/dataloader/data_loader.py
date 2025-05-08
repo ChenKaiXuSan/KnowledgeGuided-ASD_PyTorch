@@ -61,7 +61,7 @@ class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
 
-        self._default_batch_size = opt.data.default_batch_size
+        self._batch_size = opt.data.batch_size
 
         self._num_workers = opt.data.num_workers
         self._img_size = opt.data.img_size
@@ -259,7 +259,7 @@ class WalkDataModule(LightningDataModule):
 
         train_data_loader = DataLoader(
             self.train_gait_dataset,
-            batch_size=self._default_batch_size,
+            batch_size=self._batch_size,
             num_workers=self._num_workers,
             pin_memory=True,
             shuffle=True,
@@ -278,7 +278,7 @@ class WalkDataModule(LightningDataModule):
 
         val_data_loader = DataLoader(
             self.val_gait_dataset,
-            batch_size=self._default_batch_size,
+            batch_size=self._batch_size,
             num_workers=self._num_workers,
             pin_memory=True,
             shuffle=False,
@@ -297,7 +297,7 @@ class WalkDataModule(LightningDataModule):
 
         test_data_loader = DataLoader(
             self.test_gait_dataset,
-            batch_size=self._default_batch_size,
+            batch_size=self._batch_size,
             num_workers=self._num_workers,
             pin_memory=True,
             shuffle=False,

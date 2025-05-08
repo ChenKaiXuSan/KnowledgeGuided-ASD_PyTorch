@@ -17,6 +17,8 @@ HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
 
+08-05-2025	Kaixu Chen	split the model into individual file, and add the resnet model.
+
 22-03-2024	Kaixu Chen	add different class number mapping, now the class number is a hyperparameter.
 
 14-12-2023	Kaixu Chen refactor the code, now it a simple code to train video frame from dataloader.
@@ -39,8 +41,8 @@ from torchmetrics.classification import (
     MulticlassConfusionMatrix,
 )
 
-from project.models.make_model import MakeVideoModule
-from project.helper import save_CM
+from project.models.res_3dcnn import Res3DCNN
+from project.helper import save_helper
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,8 @@ class Res3DCNNTrainer(LightningModule):
         self.num_classes = hparams.model.model_class_num
 
         # define model
-        self.video_cnn = MakeVideoModule(hparams)()
+        # self.video_cnn = MakeVideoModule(hparams)()
+        self.video_cnn = Res3DCNN(hparams)
 
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
@@ -83,9 +86,7 @@ class Res3DCNNTrainer(LightningModule):
             attn_map = attn_map[:20, :, :, :, :]
             label = label[:20]
 
-        attn_video = video * attn_map  # b, c, t, h, w
-
-        video_preds = self.video_cnn(attn_video)
+        video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         # check shape
@@ -128,9 +129,7 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h, w
-
-        video_preds = self.video_cnn(attn_video)
+        video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:
@@ -190,9 +189,7 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h, w
-
-        video_preds = self.video_cnn(attn_video)
+        video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:
@@ -247,13 +244,14 @@ class Res3DCNNTrainer(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """hook function for test epoch end"""
-        # save confusion matrix
-        save_CM(
+
+        # save the metrics to file
+        save_helper(
             all_pred=self.test_pred_list,
             all_label=self.test_label_list,
-            save_path=self.logger.root_dir,
+            fold=self.logger.root_dir.split("/")[-1],
+            save_path=self.logger.save_dir,
             num_class=self.num_classes,
-            fold=self.logger.save_dir.split("/")[-1],
         )
 
         logger.info("test epoch end")
