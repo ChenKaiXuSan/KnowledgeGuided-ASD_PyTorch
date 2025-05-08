@@ -78,6 +78,11 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
+        if b > 20:
+            video = video[:20, :, :, :, :]
+            attn_map = attn_map[:20, :, :, :, :]
+            label = label[:20]
+
         attn_video = video * attn_map  # b, c, t, h, w
 
         video_preds = self.video_cnn(attn_video)

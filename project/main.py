@@ -96,7 +96,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # define the early stop.
     early_stopping = EarlyStopping(
         monitor="val/video_acc",
-        patience=3,
+        patience=5,
         mode="max",
     )
 
@@ -124,12 +124,13 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     trainer.fit(classification_module, data_module)
 
+    # FIXME: the best model path is not correct.
     # the validate method will wirte in the same log twice, so use the test method.
-    trainer.test(
-        classification_module,
-        data_module,
-        ckpt_path="best",
-    )
+    # trainer.test(
+    #     classification_module,
+    #     data_module,
+    #     ckpt_path="best",
+    # )
 
     # TODO: this step move to trainer.test() method.
     # if hparams.train.backbone == "3dcnn_atn":

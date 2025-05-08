@@ -9,15 +9,15 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": [
-        "model.backbone=3dcnnatn",
+        "model.backbone=3dcnn",
         "model.model_class_num=3",
         "train.fast_dev_run=false",
-        "train.gpu=0",
+        "train.gpu=1",
         "train.clip_duration=1",
         "train.uniform_temporal_subsample_num=8",
-        "data.num_workers=0",
+        "data.num_workers=2",
         "data.gait_cycle_batch_size=1",
-        "data.default_batch_size=2",
+        "data.default_batch_size=1",
       ]
     },
   ]

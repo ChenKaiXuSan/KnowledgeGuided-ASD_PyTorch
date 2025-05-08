@@ -25,7 +25,7 @@ data:
   sampling: "over" # over, under, none
 
   gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
-  default_batch_size: 32  # this used for default method, without gait cycle defined method.
+  default_batch_size: 1  # this used for default method, without gait cycle defined method.
 
 model:
   backbone: 3dcnnatn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream, 3dcnn_atn], help='the backbone of the model'
@@ -34,7 +34,7 @@ model:
 
 train:
   # Training config
-  max_epochs: 50 # numer of epochs of training
+  max_epochs: 20 # numer of epochs of training
 
   # used for val 
   clip_duration: 1 # clip duration for the video

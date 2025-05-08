@@ -171,7 +171,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         return sample_info_dict
 
 
-def labeled_gait_video_dataset(
+def batch_video_dataset(
     experiment: str,
     transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
     dataset_idx: Dict = {},

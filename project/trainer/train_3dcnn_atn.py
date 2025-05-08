@@ -80,6 +80,12 @@ class ATN3DCNNTrainer(LightningModule):
         label = batch["label"].detach().float().squeeze()  # b
 
         b, c, t, h, w = video.shape
+        
+        if b > 20:
+            video = video[:20, :, :, :, :]
+            raw_attn_map = raw_attn_map[:20, :, :, :, :]
+            label = label[:20]
+
 
         attn_video = video * raw_attn_map  # b, c, t, h, w
 
@@ -88,7 +94,8 @@ class ATN3DCNNTrainer(LightningModule):
         # check shape
         if b == 1:
             label = label.unsqueeze(0)
-        assert label.shape[0] == b
+
+        assert label.shape[0] == per_opt.shape[0]
 
         # compute output
         att_loss = F.cross_entropy(att_opt, label.long())
@@ -136,7 +143,8 @@ class ATN3DCNNTrainer(LightningModule):
         # check shape
         if b == 1:
             label = label.unsqueeze(0)
-        assert label.shape[0] == b
+
+        assert label.shape[0] == per_opt.shape[0]
 
         # compute output
         att_loss = F.cross_entropy(att_opt, label.long())
@@ -182,7 +190,12 @@ class ATN3DCNNTrainer(LightningModule):
 
         save_pth = os.path.join(self.logger.root_dir, "imgs")
 
-        for i in range(2):
+        b, c, t, h, w = video.shape
+
+        for i in range(b):
+
+            if i >= 2:
+                break
 
             # img
             _pth = os.path.join(save_pth, "raw_img")
