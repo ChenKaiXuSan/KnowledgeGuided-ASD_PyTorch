@@ -108,8 +108,6 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         ],
         accelerator="gpu",
         max_epochs=hparams.train.max_epochs,
-        # limit_train_batches=2,
-        # limit_val_batches=2,
         logger=tb_logger,  # wandb_logger,
         check_val_every_n_epoch=1,
         callbacks=[
@@ -119,32 +117,20 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             early_stopping,
             lr_monitor,
         ],
-        fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
+        # fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
+        # limit_train_batches=2,
+        # limit_val_batches=2,
+        # limit_test_batches=2,
     )
 
     trainer.fit(classification_module, data_module)
 
-    # FIXME: the best model path is not correct.
-    # the validate method will wirte in the same log twice, so use the test method.
-    # trainer.test(
-    #     classification_module,
-    #     data_module,
-    #     ckpt_path="best",
-    # )
-
-    # TODO: this step move to trainer.test() method.
-    # if hparams.train.backbone == "3dcnn_atn":
-    #     pass
-    # else:
-    #     # save_helper(hparams, classification_module, data_module, fold) #! debug only
-    #     save_helper(
-    #         hparams,
-    #         classification_module.load_from_checkpoint(
-    #             trainer.checkpoint_callback.best_model_path
-    #         ),
-    #         data_module,
-    #         fold,
-    #     )
+    # save the metrics to file
+    trainer.test(
+        classification_module,
+        data_module,
+        ckpt_path="best",
+    )
 
 
 @hydra.main(

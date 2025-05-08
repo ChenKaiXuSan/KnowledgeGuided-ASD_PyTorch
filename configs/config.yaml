@@ -5,6 +5,9 @@ hydra:
   sweep:
     dir: /workspace/code/logs/
     subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweeper:
+    params:
+      model.fuse_method: add, mul, concat, none
 
 optimizer:
   lr: 0.0001

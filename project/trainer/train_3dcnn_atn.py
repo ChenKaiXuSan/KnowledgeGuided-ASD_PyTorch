@@ -44,7 +44,7 @@ from torchmetrics.classification import (
 )
 
 from project.models.res_3dcnn_atn import Res3DCNNATN
-from project.helper import save_CM
+from project.helper import save_helper
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,6 @@ class Res3DCNNATNTrainer(LightningModule):
 
         logger.info(f"val loss: {loss.item()}")
 
-        
     def save_images(
         self,
         video: torch.Tensor,
@@ -234,9 +233,9 @@ class Res3DCNNATNTrainer(LightningModule):
 
     def on_test_start(self) -> None:
         """hook function for test start"""
-        self.test_outputs = []
-        self.test_pred_list = []
-        self.test_label_list = []
+        self.test_outputs: list[torch.Tensor] = []
+        self.test_pred_list: list[torch.Tensor] = []
+        self.test_label_list: list[torch.Tensor] = []
 
         logger.info("test start")
 
@@ -314,12 +313,12 @@ class Res3DCNNATNTrainer(LightningModule):
     def on_test_epoch_end(self) -> None:
         """hook function for test epoch end"""
         # save confusion matrix
-        save_CM(
+        save_helper(
             all_pred=self.test_pred_list,
             all_label=self.test_label_list,
-            save_path=self.logger.root_dir,
+            fold=self.logger.root_dir.split("/")[-1],
+            save_path=self.logger.save_dir,
             num_class=self.num_classes,
-            fold=self.logger.save_dir.split("/")[-1],
         )
 
         logger.info("test epoch end")

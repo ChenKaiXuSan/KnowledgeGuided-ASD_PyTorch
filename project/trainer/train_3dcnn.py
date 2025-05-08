@@ -42,7 +42,7 @@ from torchmetrics.classification import (
 )
 
 from project.models.res_3dcnn import Res3DCNN
-from project.helper import save_CM
+from project.helper import save_helper
 
 logger = logging.getLogger(__name__)
 
@@ -244,13 +244,14 @@ class Res3DCNNTrainer(LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """hook function for test epoch end"""
-        # save confusion matrix
-        save_CM(
+
+        # save the metrics to file
+        save_helper(
             all_pred=self.test_pred_list,
             all_label=self.test_label_list,
-            save_path=self.logger.root_dir,
+            fold=self.logger.root_dir.split("/")[-1],
+            save_path=self.logger.save_dir,
             num_class=self.num_classes,
-            fold=self.logger.save_dir.split("/")[-1],
         )
 
         logger.info("test epoch end")
