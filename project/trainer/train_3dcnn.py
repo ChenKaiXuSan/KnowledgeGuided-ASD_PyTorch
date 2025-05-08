@@ -129,9 +129,7 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h, w
-
-        video_preds = self.video_cnn(attn_video)
+        video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:
@@ -191,9 +189,7 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        attn_video = video * attn_map  # b, c, t, h, w
-
-        video_preds = self.video_cnn(attn_video)
+        video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         if b == 1:

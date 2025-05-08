@@ -44,7 +44,7 @@ train:
   # experiment: two_stream, cnn_lstm, cnn, 3dcnn
   attn_map: True # if use the attention map
 
-  experiment: ${model.backbone}_attn_map_${train.attn_map} # the experiment name
+  experiment: ${model.backbone}_attn_map_${train.attn_map}_${model.fuse_method} # the experiment name
 
   gpu: 0 # choices=[0, 1], help='the gpu number whicht to train'
 

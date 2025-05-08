@@ -44,8 +44,7 @@ class Res3DCNNATN(nn.Module):
 
         self.stem, self.stage, self.head = self.init_resnet(
             fuse_method=self.fuse_method,
-            input_channel=3,
-            model_class_num=self.model_class_num,
+            class_num=self.model_class_num,
         )
 
         # make self layer
@@ -73,9 +72,7 @@ class Res3DCNNATN(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool3d((8))
 
     @staticmethod
-    def init_resnet(
-        input_channel: int = 3, model_class_num: int = 3, fuse_method: str = "add"
-    ) -> nn.Module:
+    def init_resnet(class_num: int = 3, fuse_method: str = "add") -> tuple[nn.Module]:
 
         slow = torch.hub.load(
             "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
@@ -96,11 +93,11 @@ class Res3DCNNATN(nn.Module):
             bias=False,
         )
         # change the knetics-400 output 400 to model class num
-        slow.blocks[-1].proj = nn.Linear(2048, model_class_num)
+        slow.blocks[-1].proj = nn.Linear(2048, class_num)
 
-        stem = slow.blocks[0]
-        stage = slow.blocks[1:5]
-        head = slow.blocks[-1]
+        stem: nn.Module = slow.blocks[0]
+        stage: nn.Module = slow.blocks[1:5]
+        head: nn.Module = slow.blocks[-1]
 
         return stem, stage, head
 

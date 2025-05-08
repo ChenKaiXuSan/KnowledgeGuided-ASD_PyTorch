@@ -35,17 +35,21 @@ class Res3DCNN(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
-        self.model = self.init_resnet(self.model_class_num)
-
         self.fuse_method = hparams.model.fuse_method
 
-    def init_resnet(self, input_channel: int = 3) -> nn.Module:
+        self.model = self.init_resnet(
+            self.model_class_num,
+            self.fuse_method,
+        )
+
+    @staticmethod
+    def init_resnet(class_num: int = 3, fuse_method: str = "add") -> nn.Module:
 
         slow = torch.hub.load(
             "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
         )
 
-        if self.fuse_method == "concat":
+        if fuse_method == "concat":
             input_channel = 3 + 1
         else:
             input_channel = 3
@@ -60,7 +64,7 @@ class Res3DCNN(nn.Module):
             bias=False,
         )
         # change the knetics-400 output 400 to model class num
-        slow.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
+        slow.blocks[-1].proj = nn.Linear(2048, class_num)
 
         return slow
 
@@ -73,6 +77,11 @@ class Res3DCNN(nn.Module):
         Returns:
             torch.Tensor: (B, C, T, H, W)
         """
+
+        assert video.shape[0] == attn_map.shape[0], "the batch size is not equal"
+        assert video.shape[2] == attn_map.shape[2], "the time size is not equal"
+        assert video.shape[3] == attn_map.shape[3], "the height size is not equal"
+        assert video.shape[4] == attn_map.shape[4], "the width size is not equal"
 
         if self.fuse_method == "concat":
             # video = torch.cat((video, attn_map), dim=1)
