@@ -8,6 +8,7 @@ hydra:
   sweeper:
     params:
       model.fuse_method: add, mul, concat, none
+      model.backbone: 3dcnnatn, 3dcnn
 
 optimizer:
   lr: 0.0001
