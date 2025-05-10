@@ -81,10 +81,10 @@ class Res3DCNNATNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        if b > 20:
-            video = video[:20, :, :, :, :]
-            raw_attn_map = raw_attn_map[:20, :, :, :, :]
-            label = label[:20]
+        # if b > 20:
+        #     video = video[:20, :, :, :, :]
+        #     raw_attn_map = raw_attn_map[:20, :, :, :, :]
+        #     label = label[:20]
 
         att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 

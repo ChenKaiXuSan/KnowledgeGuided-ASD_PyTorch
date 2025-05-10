@@ -22,9 +22,9 @@ data:
   skeleton_path: ${data.root_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
   doctor_results_path: ${data.root_path}/doctor_result # doctor results path, this used for cross validation, with different class number.
 
-  index_mapping: ${data.root_path}/index_mapping_old # training mapping path, this used for cross validation, with different class number.
+  index_mapping: ${data.root_path}/index_mapping # training mapping path, this used for cross validation, with different class number.
 
-  num_workers: 0
+  num_workers: 32
   img_size: 224
   sampling: "over" # over, under, none
 
@@ -55,4 +55,4 @@ train:
   log_path: logs/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
-  fold: 5 # the fold number of the cross validation
+  fold: 10 # the fold number of the cross validation

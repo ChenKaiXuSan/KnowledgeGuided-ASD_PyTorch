@@ -81,10 +81,10 @@ class Res3DCNNTrainer(LightningModule):
 
         b, c, t, h, w = video.shape
 
-        if b > 20:
-            video = video[:20, :, :, :, :]
-            attn_map = attn_map[:20, :, :, :, :]
-            label = label[:20]
+        # if b > 20:
+        #     video = video[:20, :, :, :, :]
+        #     attn_map = attn_map[:20, :, :, :, :]
+        #     label = label[:20]
 
         video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
