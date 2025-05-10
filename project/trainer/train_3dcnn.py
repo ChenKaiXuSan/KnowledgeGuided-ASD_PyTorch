@@ -76,7 +76,7 @@ class Res3DCNNTrainer(LightningModule):
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float()  # b
         # sample_info = batch["info"] # b is the video instance number
 
         b, c, t, h, w = video.shape
@@ -90,8 +90,8 @@ class Res3DCNNTrainer(LightningModule):
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
         # check shape
-        if b == 1:
-            label = label.unsqueeze(0)
+        # if b == 1:
+        #     label = label.unsqueeze(0)
 
         assert label.shape[0] == video_preds.shape[0]
 
@@ -125,15 +125,15 @@ class Res3DCNNTrainer(LightningModule):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float()  # b
 
         b, c, t, h, w = video.shape
 
         video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
-        if b == 1:
-            label = label.unsqueeze(0)
+        # if b == 1:
+        #     label = label.unsqueeze(0)
 
         # check shape
         assert label.shape[0] == b
@@ -185,15 +185,15 @@ class Res3DCNNTrainer(LightningModule):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float()  # b
 
         b, c, t, h, w = video.shape
 
         video_preds = self.video_cnn(video, attn_map)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
-        if b == 1:
-            label = label.unsqueeze(0)
+        # if b == 1:
+        #     label = label.unsqueeze(0)
 
         # check shape
         assert label.shape[0] == b
@@ -236,7 +236,7 @@ class Res3DCNNTrainer(LightningModule):
         """
 
         pred_softmax, pred = outputs
-        label = batch["label"].detach().float().squeeze()
+        label = batch["label"].detach().float()
 
         self.test_outputs.append(outputs)
         self.test_pred_list.append(pred_softmax)

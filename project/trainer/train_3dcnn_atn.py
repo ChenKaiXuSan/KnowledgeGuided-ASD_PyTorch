@@ -77,7 +77,7 @@ class Res3DCNNATNTrainer(LightningModule):
         # prepare the input and label
         video = batch["video"].detach()  # b, c, t, h, w
         raw_attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float()  # b
 
         b, c, t, h, w = video.shape
 
@@ -89,8 +89,8 @@ class Res3DCNNATNTrainer(LightningModule):
         att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
-        if b == 1:
-            label = label.unsqueeze(0)
+        # if b == 1:
+        #     label = label.unsqueeze(0)
 
         assert label.shape[0] == per_opt.shape[0]
 
@@ -129,15 +129,15 @@ class Res3DCNNATNTrainer(LightningModule):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         raw_attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float() # b
 
         b, c, t, h, w = video.shape
 
         att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
-        if b == 1:
-            label = label.unsqueeze(0)
+        # if b == 1:
+        #     label = label.unsqueeze(0)
 
         assert label.shape[0] == per_opt.shape[0]
 
@@ -248,16 +248,16 @@ class Res3DCNNATNTrainer(LightningModule):
         # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         raw_attn_map = batch["attn_map"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach().float()  # b
 
         b, c, t, h, w = video.shape
 
         att_opt, per_opt, gen_att_map, fused_ipt = self.resnet_atn(video, raw_attn_map)
 
         # check shape
-        if b == 1:
-            label = label.unsqueeze(0)
-        assert label.shape[0] == b
+        # if b == 1:
+        #     label = label.unsqueeze(0)
+        # assert label.shape[0] == b
 
         # compute output
         att_loss = F.cross_entropy(att_opt, label.long())
@@ -304,7 +304,7 @@ class Res3DCNNATNTrainer(LightningModule):
         """
 
         att_opt, per_opt, attention = outputs
-        label = batch["label"].detach().float().squeeze()
+        label = batch["label"].detach().float()
 
         self.test_outputs.append(outputs)
         self.test_pred_list.append(per_opt)
