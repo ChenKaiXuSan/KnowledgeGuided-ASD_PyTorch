@@ -38,7 +38,6 @@ class Res3DCNNATN(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
-        self.model_depth = hparams.model.model_depth
 
         self.fuse_method = hparams.model.fuse_method
 
@@ -149,3 +148,17 @@ class Res3DCNNATN(nn.Module):
             res_att.append(_att)
 
         return ax, rx, torch.stack(res_att, dim=2), _input
+
+if __name__ == "__main__":
+    from omegaconf import OmegaConf
+    hparams = OmegaConf.create({
+        "model": {
+            "model_class_num": 3,
+            "fuse_method": "add",  # can be 'concat', 'add', 'mul', 'none'
+        }
+    })
+    model = Res3DCNNATN(hparams)
+    video = torch.randn(2, 3, 8, 224, 224)
+    attn_map = torch.randn(2, 1, 8, 224, 224)
+    output = model(video, attn_map)
+    print(output.shape)
