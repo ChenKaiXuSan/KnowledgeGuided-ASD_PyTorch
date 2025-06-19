@@ -15,7 +15,7 @@
         "train.clip_duration=1",
         "train.uniform_temporal_subsample_num=8",
         "data.num_workers=0",
-        "model.fuse_method=avg"
+        "model.fuse_method=se_atn"
       ]
     },
     {

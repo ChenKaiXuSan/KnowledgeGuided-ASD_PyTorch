@@ -54,7 +54,7 @@ class CrossAttentionRes3DCNN(nn.Module):
         ])
 
         for fusion in self.attn_fusions:
-            fusion.save_attn = True
+            fusion.save_attn = False
 
     @staticmethod
     def init_resnet(class_num: int = 3) -> nn.Module:

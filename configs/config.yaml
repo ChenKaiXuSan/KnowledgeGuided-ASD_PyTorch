@@ -7,7 +7,7 @@ hydra:
     subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweeper:
     params:
-      model.fuse_method: add, mul, concat, none, late, avg, cross_atnn
+      model.fuse_method: add, mul, concat, none, late, avg
       model.backbone: 3dcnn
 
 optimizer:
@@ -35,7 +35,7 @@ model:
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
-  fuse_method: add # add, mul, concat, none, late, avg, cross_atn
+  fuse_method: add # add, mul, concat, none, late, avg, cross_atn, se_atn
 
 train:
   # Training config

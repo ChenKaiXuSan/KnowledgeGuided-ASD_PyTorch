@@ -25,7 +25,8 @@ Date      	By	Comments
 
 import torch.nn as nn
 
-from project.models.cross_attnetion_res_3dcnn import CrossAttentionRes3DCNN
+from project.models.cross_attn_res_3dcnn import CrossAttentionRes3DCNN
+from project.models.se_attn_res_3dcnn import SEFusionRes3DCNN
 from project.models.res_3dcnn import Res3DCNN
 from project.models.res_3dcnn_atn import Res3DCNNATN
 
@@ -47,6 +48,8 @@ def select_model(hparams) -> nn.Module:
     if model_backbone == "3dcnn":
         if fuse_method == "cross_atn":
             model = CrossAttentionRes3DCNN(hparams)
+        elif fuse_method == "se_atn":
+            model = SEFusionRes3DCNN(hparams)
         else:
             model = Res3DCNN(hparams)
     elif model_backbone == "3dcnn_atn":
