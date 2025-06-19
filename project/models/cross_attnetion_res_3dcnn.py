@@ -39,7 +39,7 @@ class CrossAttentionFusion(nn.Module):
         return out + x
 
 
-class Res3DCNN(nn.Module):
+class CrossAttentionRes3DCNN(nn.Module):
     def __init__(self, hparams) -> None:
         super().__init__()
         self.model_class_num = hparams.model.model_class_num
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             "model_class_num": 3
         }
     })
-    model = Res3DCNN(hparams)
+    model = CrossAttentionRes3DCNN(hparams)
     video = torch.randn(2, 3, 8, 224, 224)
     attn_map = torch.randn(2, 1, 8, 224, 224)
     output = model(video, attn_map)

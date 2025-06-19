@@ -100,3 +100,18 @@ class Res3DCNN(nn.Module):
         output = self.model(_input)
 
         return output
+
+
+if __name__ == "__main__":
+    from omegaconf import OmegaConf
+    hparams = OmegaConf.create({
+        "model": {
+            "model_class_num": 3,
+            "fuse_method": "add",  # can be 'concat', 'add', 'mul', 'none'
+        }
+    })
+    model = Res3DCNN(hparams)
+    video = torch.randn(2, 3, 8, 224, 224)
+    attn_map = torch.randn(2, 1, 8, 224, 224)
+    output = model(video, attn_map)
+    print(output.shape)
