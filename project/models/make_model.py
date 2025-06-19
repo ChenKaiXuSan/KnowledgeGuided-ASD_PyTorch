@@ -27,6 +27,7 @@ import torch.nn as nn
 
 from project.models.cross_attnetion_res_3dcnn import CrossAttentionRes3DCNN
 from project.models.res_3dcnn import Res3DCNN
+from project.models.res_3dcnn_atn import Res3DCNNATN
 
 
 def select_model(hparams) -> nn.Module:
@@ -48,6 +49,8 @@ def select_model(hparams) -> nn.Module:
             model = CrossAttentionRes3DCNN(hparams)
         else:
             model = Res3DCNN(hparams)
+    elif model_backbone == "3dcnn_atn":
+        model = Res3DCNNATN(hparams)
     else:
         raise ValueError(f"Unknown model backbone: {model_backbone}")
 
