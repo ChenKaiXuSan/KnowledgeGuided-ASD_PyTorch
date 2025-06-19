@@ -35,7 +35,7 @@ model:
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
-  fuse_method: add # add, mul, concat, none, cross_atnn, late
+  fuse_method: add # add, mul, concat, none, cross_atnn, late, avg
 
 train:
   # Training config
