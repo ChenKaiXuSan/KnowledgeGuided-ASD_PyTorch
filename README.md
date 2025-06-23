@@ -1,98 +1,102 @@
 <div align="center">    
  
-# Your Project Name     
+# A Clinical Knowledge-Guided Attention Framework for Gait-Based Adult Spinal Deformity Diagnosis
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
+<!-- [![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
 [![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
 [![Conference](http://img.shields.io/badge/ICLR-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
-[![Conference](http://img.shields.io/badge/AnyConference-year-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)  
+[![Conference](http://img.shields.io/badge/AnyConference-year-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)   -->
 <!--
-ARXIV   
+ARXIV
 [![Paper](http://img.shields.io/badge/arxiv-math.co:1480.1111-B31B1B.svg)](https://www.nature.com/articles/nature14539)
 -->
-![CI testing](https://github.com/PyTorchLightning/deep-learning-project-template/workflows/CI%20testing/badge.svg?branch=master&event=push)
 
+![CI testing](https://github.com/PyTorchLightning/deep-learning-project-template/workflows/CI%20testing/badge.svg?branch=master&event=push)
 
 <!--  
 Conference   
--->   
+-->
 </div>
  
 ## Description   
-This github repository is a template for deep learning projects. It is based on PyTorch Lightning and contains the following features:
-- DataModule
-- Model
-- Trainer
-- Test helper
 
-## How to run   
-First, install dependencies   
+This repository contains the official implementation of our research on leveraging clinical knowledge to guide attention mechanisms in gait-based classification of Adult Spinal Deformity (ASD) using monocular video data.
+
+🧠 **Key Contributions**:
+
+- Incorporates domain-specific anatomical knowledge from orthopedic experts
+- Introduces a clinically-guided attention mechanism focusing on spinal and lower-limb joints
+- Applies cross-attentive temporal fusion for periodic motion representation
+- Enhances interpretability and diagnostic accuracy of ASD classification models
+
+
+## 📂 Project Structure
+
 ```bash
-# clone project   
-git clone [url]
+ClinicalGait-ASD/
+├── configs/               # Configuration files
+├── data/                  # Dataset loading and preprocessing
+├── models/                # Network components (backbone, attention, etc.)
+├── trainer/               # Training and evaluation scripts
+├── utils/                 # Visualization, metrics, and helpers
+├── demo/                  # Inference examples and demo video generation
+├── scripts/               # Shell scripts for training and evaluation
+├── docs/                  # Figures and documentation
+├── requirements.txt       # Python dependencies
+└── README.md
+```
 
-# install project   
-cd deep-learning-project-template 
-pip install -e .   
+## 🛠️ Installation
+
+```bash
+git clone https://github.com/your_username/ClinicalGait-ASD.git
+cd ClinicalGait-ASD
 pip install -r requirements.txt
- ```   
- Next, navigate to any file and run it.   
- ```bash
-# module folder
-cd project
-
-# run module (example: mnist as your main contribution)   
-python lit_classifier_main.py    
 ```
 
-## Project Organization   
-```txt
-├── README.md          <- The top-level README for developers using this project.
-├── data
-│   ├── external       <- Data from third party sources.
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
-│
-├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
-│
-├── project            <- Source code for use in this project.
-│   ├── __init__.py    <- Makes project a Python module
+## 🧪 Demo (Inference)
+
+You can run the pre-trained model on sample videos to visualize predictions and attention maps.
+
+```bash
+python demo/run_demo.py --video_path sample.mp4 --output_path outputs/
 ```
 
-## Imports
-This project is setup as a package which means you can now easily import any file into any other file like so:
-```python
-from project.datasets.mnist import mnist
-from project.lit_classifier_main import LitClassifier
-from pytorch_lightning import Trainer
+## 🚀 Training
 
-# model
-model = LitClassifier()
+To train the model on your own data:
 
-# data
-train, val, test = mnist()
-
-# train
-trainer = Trainer()
-trainer.fit(model, train, val)
-
-# test using the best model!
-trainer.test(test_dataloaders=test)
+```bash
+python trainer/train.py --config configs/asd_config.yaml
 ```
 
-### Citation   
+For evaluation:
+
+```bash
+python trainer/evaluate.py --config configs/asd_config.yaml
 ```
-@article{YourName,
-  title={Your Title},
-  author={Your team},
-  journal={Location},
-  year={Year}
+
+## 🧬 Dataset
+
+We use a video-based gait dataset for ASD diagnosis, approved by the University of Tsukuba Hospital Ethics Committee (H30-087). The dataset contains annotated gait clips with clinical labels. See [our paper](#) for details.
+_Note: The dataset is not publicly released due to privacy constraints. Please contact us for collaboration._
+
+## 📈 Results
+
+| Method             | Accuracy  | F1-score | AUC      |
+| ------------------ | --------- | -------- | -------- |
+| Baseline CNN       | 78.5%     | 0.76     | 0.81     |
+| **Ours (CK-Attn)** | **85.2%** | **0.83** | **0.89** |
+
+## 📄 Citation
+
+If you find this project helpful, please cite our work:
+
+```bibtex
+@article{chen2025clinical,
+  title={A Clinical Knowledge-Guided Attention Framework for Gait-Based Adult Spinal Deformity Diagnosis},
+  author={Chen, Kaixu and ...},
+  journal={TBA},
+  year={2025}
 }
-```   
+```
