@@ -89,14 +89,14 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         auto_insert_metric_name=False,
         monitor="val/video_acc",
         mode="max",
-        save_last=False,
+        save_last=True,
         save_top_k=2,
     )
 
     # define the early stop.
     early_stopping = EarlyStopping(
         monitor="val/video_acc",
-        patience=5,
+        patience=2,
         mode="max",
     )
 
