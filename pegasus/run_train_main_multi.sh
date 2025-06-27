@@ -35,7 +35,8 @@ echo "Current virtual environment: $(which python)"
 echo "Current Model load path: $(ls checkpoints/SLOW_8x8_R50.pyth)"
 
 # 映射关系：数字 → 融合方式名称
-fuse_methods=("add" "mul" "avg" "concat" "none" "late")
+# fuse_methods=("add" "mul" "avg" "concat" "none" "late")
+fuse_methods={"none" "late" "concat" "avg  }
 
 # 用数字选择（比如从命令行传入，或固定指定）
 fuse_index=${PBS_SUBREQNO}
