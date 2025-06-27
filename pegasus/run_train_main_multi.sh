@@ -3,7 +3,7 @@
 #PBS -q gen_S                        # ✅ 队列名（gpu / debug / gen_S）
 #PBS -l elapstim_req=24:00:00         # ⏱ 运行时间限制（最多 24 小时）
 #PBS -N train_multi                     # 🏷 作业名称
-#PBS -t 0-6
+#PBS -t 0-5
 #PBS -o logs/pegasus/train_multi_out.log            # 📤 标准输出日志
 #PBS -e logs/pegasus/train_multi_err.log            # ❌ 错误输出日志
 
