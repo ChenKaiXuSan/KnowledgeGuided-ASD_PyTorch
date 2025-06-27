@@ -22,11 +22,8 @@ Date      	By	Comments
 26-11-2024	Kaixu Chen	remove x3d network.
 """
 
-
 import torch.nn as nn
 
-from project.models.cross_attn_res_3dcnn import CrossAttentionRes3DCNN
-from project.models.se_attn_res_3dcnn import SEFusionRes3DCNN
 from project.models.res_3dcnn import Res3DCNN
 from project.models.res_3dcnn_atn import Res3DCNNATN
 
@@ -46,12 +43,7 @@ def select_model(hparams) -> nn.Module:
     fuse_method = hparams.model.fuse_method
 
     if model_backbone == "3dcnn":
-        if fuse_method == "cross_atn":
-            model = CrossAttentionRes3DCNN(hparams)
-        elif fuse_method == "se_atn":
-            model = SEFusionRes3DCNN(hparams)
-        else:
-            model = Res3DCNN(hparams)
+        model = Res3DCNN(hparams)
     elif model_backbone == "3dcnn_atn":
         model = Res3DCNNATN(hparams)
     else:
