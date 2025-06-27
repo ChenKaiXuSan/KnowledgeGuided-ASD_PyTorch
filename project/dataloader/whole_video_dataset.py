@@ -75,7 +75,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             one_sec_vframes = vframes[f : f + fps, :, :, :]
 
             if self._transform is not None:
-                transformed_img = self._transform(one_sec_vframes.permute(1, 0, 2, 3))
+                transformed_img = self._transform(one_sec_vframes)
 
                 batch_res.append(transformed_img.permute(1, 0, 2, 3))  # c, t, h, w
             else:

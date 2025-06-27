@@ -59,7 +59,7 @@ class Res3DCNN(BaseModel):
     """
 
     def __init__(self, hparams) -> None:
-        super().__init__()
+        super().__init__(hparams)
 
         self.ckpt = hparams.model.ckpt_path
         self.model_class_num = hparams.model.model_class_num
