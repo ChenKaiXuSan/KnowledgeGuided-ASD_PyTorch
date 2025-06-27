@@ -8,7 +8,7 @@
 #PBS -e logs/pegasus/train_multi_err.log            # ❌ 错误输出日志
 
 # === 切换到作业提交目录 ===
-cd /home/SKIING/chenkaixu/code/ClinicalGait-CrossAttention_ASD_PyTorch
+cd /home/SKIING/chenkaixu/code/KnowledgeGuided-ASD_PyTorch
 
 mkdir -p logs/pegasus/
 mkdir -p checkpoints/
