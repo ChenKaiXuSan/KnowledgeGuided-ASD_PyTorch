@@ -2,11 +2,11 @@
 	"folders": [
 		{
 			"name": "keypoint_attn_map",
-			"path": "/workspace/code/"
+			"path": "/home/SKIING/chenkaixu/code/KnowledgeGuided-ASD_PyTorch"
 		},
 		{
 			"name": "dataset",
-			"path": "/workspace/data/"
+			"path": "/work/SKIING/chenkaixu/data/asd_dataset"
 		},
 		{
 			"name": "Skeleton_ASD_PyTorch",
