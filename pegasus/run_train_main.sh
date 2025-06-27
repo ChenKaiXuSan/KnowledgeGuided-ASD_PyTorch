@@ -27,7 +27,8 @@ nvidia-smi
 NUM_WORKERS=$(nproc)
 # 输出当前环境信息
 echo "Current working directory: $(pwd)"
-echo "Total CPU cores: $NUM_WORKERS, use $((NUM_WORKERS / 2)) for data loading"
+echo "Total CPU cores: $NUM_WORKERS, use $((NUM_WORKERS / 3)) for data loading"
+echo "Total RAM: $(free -h | grep Mem | awk '{print $2}')"
 echo "Current Python version: $(python --version)"
 echo "Current virtual environment: $(which python)"
 echo "Current Model load path: $(ls checkpoints/SLOW_8x8_R50.pyth)"
@@ -36,4 +37,4 @@ echo "Current Model load path: $(ls checkpoints/SLOW_8x8_R50.pyth)"
 root_path=/work/SKIING/chenkaixu/data/asd_dataset
 
 # === 运行你的训练脚本（Hydra 参数可以加在后面）===
-python -m project.main data.root_path=${root_path} model.fuse_method=add train.fold=10 data.num_workers=$((NUM_WORKERS / 2))
+python -m project.main data.root_path=${root_path} model.fuse_method=add train.fold=10 data.num_workers=$((NUM_WORKERS / 3))
