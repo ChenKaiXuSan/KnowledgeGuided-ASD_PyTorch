@@ -59,6 +59,8 @@ class DefineCrossValidation(object):
         self.class_num: int = config.model.model_class_num
         self.clip_duration: int = config.train.clip_duration
 
+        self.raw_video_path = config.data.video_path
+
     @staticmethod
     def random_sampler(X: list, y: list, train_idx: list, val_idx: list, sampler):
         # train
@@ -152,6 +154,12 @@ class DefineCrossValidation(object):
                 file_info_dict = json.load(f)
 
             video_name = file_info_dict["video_name"]
+            # * change the video path to fit the different server.
+            file_info_dict["video_path"] = (
+                self.raw_video_path
+                + "/"
+                + "/".join(file_info_dict["video_path"].split("/")[-4:])
+            )
             video_path = file_info_dict["video_path"]
             video_disease = file_info_dict["disease"]
 
@@ -162,6 +170,10 @@ class DefineCrossValidation(object):
                 (temp_path / video_disease).mkdir(parents=True, exist_ok=False)
 
             shutil.copy(video_path, temp_path / video_disease / (video_name + ".mp4"))
+
+            # update the json file with the video path
+            with open(path, "w") as f:
+                json.dump(file_info_dict, f, indent=4)
 
         return temp_path
 

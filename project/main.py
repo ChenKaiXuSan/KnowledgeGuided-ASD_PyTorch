@@ -96,7 +96,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # define the early stop.
     early_stopping = EarlyStopping(
         monitor="val/video_acc",
-        patience=2,
+        patience=5,
         mode="max",
     )
 

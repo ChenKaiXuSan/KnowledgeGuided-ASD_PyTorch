@@ -1,10 +1,10 @@
 # hydra config
 hydra:
   run:
-    dir: /workspace/code/logs/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${train.log_path} # the log path, used for log and checkpoint
   sweep:
-    dir: /workspace/code/logs/
-    subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${train.log_path} # the sweep path, used for log and checkpoint
+    # subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweeper:
     params:
       model.fuse_method: add, mul, concat, none, late, avg
@@ -16,13 +16,15 @@ optimizer:
   beta2: 0.999
 
 data:
-  root_path: /workspace/data/pose_attn_map_dataset # this is the root path of dataset.
+  root_path: /workspace/data
+  
+  info_path: ${data.root_path}/pose_attn_map_dataset # this is the root path of dataset.
+  video_path: ${data.root_path}/segmentation_dataset_512
 
-  data_info_path: ${data.root_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset.
-  skeleton_path: ${data.root_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
-  doctor_results_path: ${data.root_path}/doctor_result # doctor results path, this used for cross validation, with different class number.
-
-  index_mapping: ${data.root_path}/index_mapping # training mapping path, this used for cross validation, with different class number.
+  data_info_path: ${data.info_path}/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset.
+  skeleton_path: ${data.info_path}/seg_skeleton_pkl # skeleton path, this used for cross validation, with different class number.
+  doctor_results_path: ${data.info_path}/doctor_result # doctor results path, this used for cross validation, with different class number.
+  index_mapping: ${data.info_path}/index_mapping # training mapping path, this used for cross validation, with different class number.
 
   num_workers: 12
   img_size: 224
@@ -31,11 +33,13 @@ data:
   batch_size: 1 # this used for default method, without gait cycle defined method.
 
 model:
-  backbone: 3dcnn # choices=[3dcnn], help='the backbone of the model'
+  backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream, 3dcnn_atn], help='the backbone of the model'
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
-  fuse_method: add # add, mul, concat, none, late, avg
+  fuse_method: add # add, mul, concat, none, late, avg, cross_atn, se_atn, pose_atn
+  fusion_layers: 5 # the fuse layer number of the model, used for cross attention, se attention, etc.
+  ckpt_path: checkpoints/SLOW_8x8_R50.pyth # the checkpoint path of the model, used for pre-trained model
 
 train:
   # Training config
@@ -48,7 +52,7 @@ train:
   # experiment: two_stream, cnn_lstm, cnn, 3dcnn
   attn_map: True # if use the attention map
 
-  experiment: ${model.backbone}_attn_map_${train.attn_map}_${model.fuse_method} # the experiment name
+  experiment: ${model.backbone}_attn_map_${train.attn_map}_${model.fuse_method}_${model.fusion_layers} # the experiment name, used for log path
 
   gpu: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
