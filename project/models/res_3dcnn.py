@@ -24,6 +24,8 @@ Date      	By	Comments
 import torch
 import torch.nn as nn
 
+from project.models.base_model import BaseModel
+
 
 class LateFusionBlock(nn.Module):
     def __init__(self, in_dim: int, out_dim: int):
@@ -50,7 +52,7 @@ class LateFusionBlock(nn.Module):
         return out
 
 
-class Res3DCNN(nn.Module):
+class Res3DCNN(BaseModel):
     """
     make 3D CNN model from the PytorchVideo lib.
 
@@ -59,12 +61,19 @@ class Res3DCNN(nn.Module):
     def __init__(self, hparams) -> None:
         super().__init__()
 
+        self.ckpt = hparams.model.ckpt_path
         self.model_class_num = hparams.model.model_class_num
         self.fuse_method = hparams.model.fuse_method
 
+        if self.fuse_method == "concat":
+            input_channel = 3 + 1  # RGB + attention map
+        else:
+            input_channel = 3
+
         self.model = self.init_resnet(
-            self.model_class_num,
-            self.fuse_method,
+            input_num=input_channel,
+            weight_path=self.ckpt,
+            class_num=self.model_class_num,
         )
 
         if self.fuse_method == "late":
@@ -72,32 +81,6 @@ class Res3DCNN(nn.Module):
                 in_dim=self.model_class_num,  # Input dimension from the main feature
                 out_dim=self.model_class_num,  # Output dimension for the attention map
             )
-
-    @staticmethod
-    def init_resnet(class_num: int = 3, fuse_method: str = "add") -> nn.Module:
-
-        slow = torch.hub.load(
-            "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
-        )
-
-        if fuse_method == "concat":
-            input_channel = 3 + 1
-        else:
-            input_channel = 3
-
-        # for the folw model and rgb model
-        slow.blocks[0].conv = nn.Conv3d(
-            input_channel,
-            64,
-            kernel_size=(1, 7, 7),
-            stride=(1, 2, 2),
-            padding=(0, 3, 3),
-            bias=False,
-        )
-        # change the knetics-400 output 400 to model class num
-        slow.blocks[-1].proj = nn.Linear(2048, class_num)
-
-        return slow
 
     def forward(self, video: torch.Tensor, attn_map: torch.Tensor) -> torch.Tensor:
         """
@@ -137,12 +120,7 @@ class Res3DCNN(nn.Module):
 if __name__ == "__main__":
     from omegaconf import OmegaConf
 
-    hparams = OmegaConf.create({
-        "model": {
-            "model_class_num": 3,
-            "fuse_method": "late"
-        }
-    })
+    hparams = OmegaConf.create({"model": {"model_class_num": 3, "fuse_method": "late"}})
 
     model = Res3DCNN(hparams)
     video = torch.randn(2, 3, 8, 224, 224)
