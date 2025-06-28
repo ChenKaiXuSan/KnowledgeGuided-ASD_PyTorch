@@ -171,15 +171,15 @@ def save_confusion_matrices(cm_dict: Dict[str, torch.Tensor], save_dir: Path):
         plt.rcParams.update({'font.size': 30, 'font.family': 'sans-serif'})
 
 		# draw confusion matrix
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(12, 10))
         sns.heatmap(cm, annot=True, fmt='.2f', cmap='Reds', xticklabels=labels, yticklabels=labels, vmin=0, vmax=100)
         # plt.title(f'{title} (%)', fontsize=30)
         plt.title(f"{model} (%)", fontsize=30)
         plt.ylabel('Actual Label', fontsize=30)
         plt.xlabel('Predicted Label', fontsize=30)
-        plt.savefig(save_dir)
+        plt.savefig(save_dir / f"{model}_cm.png")
         plt.close()
-        print("✔ Saved CM →", save_dir)
+        print("✔ Saved CM →", save_dir / f"{model}_cm.png")
 
 
 def save_pt(selected: Dict[str, Dict[int, dict]], model_paths: Dict[str, str], save_dir: Path):
@@ -201,10 +201,10 @@ def save_pt(selected: Dict[str, Dict[int, dict]], model_paths: Dict[str, str], s
 # ──────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from path import pegasus # 替换为你的路径字典
+    from path import pegasus, ws3, LELAB_new # 替换为你的路径字典
     
-    server = pegasus
-    MODE: FoldSelectMode = "same"   # "top" or "same"
+    server = ws3
+    MODE: FoldSelectMode = "top"   # "top" or "same"
     K            = 5                # 保留折数
     KEY_METRIC   = "accuracy"       # 只在 top 模式用
     NUM_CLASS    = 3
