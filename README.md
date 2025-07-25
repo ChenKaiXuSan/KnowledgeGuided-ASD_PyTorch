@@ -1,100 +1,116 @@
-<div align="center">    
- 
-# A Clinical Knowledge-Guided Attention Framework for Gait-Based Adult Spinal Deformity Diagnosis
+<div align="center">
 
-<!-- [![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
-[![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
-[![Conference](http://img.shields.io/badge/ICLR-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
-[![Conference](http://img.shields.io/badge/AnyConference-year-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)   -->
-<!--
-ARXIV
-[![Paper](http://img.shields.io/badge/arxiv-math.co:1480.1111-B31B1B.svg)](https://www.nature.com/articles/nature14539)
--->
+# KnowledgeGuided-ASD\_PyTorch
 
-<!--  
-Conference   
--->
+**Clinical Knowledge-Guided Attention Framework for Gait-Based Adult Spinal Deformity Diagnosis**
+
 </div>
- 
-## Description   
 
-This repository contains the official implementation of our research on leveraging clinical knowledge to guide attention mechanisms in gait-based classification of Adult Spinal Deformity (ASD) using monocular video data.
+---
 
-🧠 **Key Contributions**:
+## 🧠 Overview
 
-- Incorporates domain-specific anatomical knowledge from orthopedic experts
-- Introduces a clinically-guided attention mechanism focusing on spinal and lower-limb joints
-- Applies cross-attentive temporal fusion for periodic motion representation
-- Enhances interpretability and diagnostic accuracy of ASD classification models
+This repository presents a **knowledge-guided gait analysis framework** for the diagnosis of Adult Spinal Deformity (ASD) from monocular walking videos. It introduces **clinician-informed attention maps** that highlight anatomically and diagnostically important regions (e.g., lumbar, pelvis, shoulder), guiding the deep model to focus on **clinically relevant features**.
 
+---
 
-## 📂 Project Structure
+## ✨ Key Contributions
 
-```bash
-ClinicalGait-ASD/
-├── configs/               # Configuration files
-├── data/                  # Dataset loading and preprocessing
-├── models/                # Network components (backbone, attention, etc.)
-├── trainer/               # Training and evaluation scripts
-├── utils/                 # Visualization, metrics, and helpers
-├── demo/                  # Inference examples and demo video generation
-├── scripts/               # Shell scripts for training and evaluation
-├── docs/                  # Figures and documentation
-├── requirements.txt       # Python dependencies
-└── README.md
+* 🪻 **Medical Prior Integration**: Expert annotations are encoded as attention maps targeting key joints linked to spinal disorders.
+* 🎯 **Clinically Explainable Attention**: Gaussian-based spatial priors emphasize pathological body regions.
+* 🤀 **Fusion Strategies**: Systematic evaluation of how different attention map fusion mechanisms affect performance.
+* 📈 **Superior Performance**: Outperforms baselines like CNN, ST-GCN, and 3D CNN across accuracy, F1-score, and interpretability.
+
+---
+
+## 🗂️ Project Structure
+
+```
+KnowledgeGuided-ASD_PyTorch/
+👉 configs/                # Configuration YAMLs
+👉 data/                   # Dataset interfaces
+👉 models/                 # Attention, CNN, 3D CNN, Fusion modules
+👉 trainers/               # Training and evaluation logic
+👉 utils/                  # Utility scripts
+👉 attention_maps/         # Priors and Gaussian heatmaps
+👉 scripts/                # Bash automation scripts
+👉 requirements.txt        # Python requirements
+👉 README.md
 ```
 
-## 🛠️ Installation
+---
+
+## 🚀 Quick Start
+
+### 1. Installation
 
 ```bash
-git clone https://github.com/your_username/ClinicalGait-ASD.git
-cd ClinicalGait-ASD
+git clone https://github.com/ChenKaiXuSan/KnowledgeGuided-ASD_PyTorch.git
+cd KnowledgeGuided-ASD_PyTorch
 pip install -r requirements.txt
 ```
 
-## 🧪 Demo (Inference)
-
-You can run the pre-trained model on sample videos to visualize predictions and attention maps.
+### 2. Prepare Attention Maps
 
 ```bash
-python demo/run_demo.py --video_path sample.mp4 --output_path outputs/
+python scripts/generate_attention_maps.py --config configs/roi.yaml
 ```
 
-## 🚀 Training
+This uses pose keypoints and clinical priors to generate Gaussian-weighted attention heatmaps.
 
-To train the model on your own data:
+### 3. Train Model
 
 ```bash
-python trainer/train.py --config configs/asd_config.yaml
+python trainers/train.py --config configs/train_fusion.yaml
 ```
 
-For evaluation:
+### 4. Evaluate Model
 
 ```bash
-python trainer/evaluate.py --config configs/asd_config.yaml
+python trainers/eval.py --config configs/train_fusion.yaml
 ```
 
-## 🧬 Dataset
+---
 
-We use a video-based gait dataset for ASD diagnosis, approved by the University of Tsukuba Hospital Ethics Committee (H30-087). The dataset contains annotated gait clips with clinical labels. See [our paper](#) for details.
-_Note: The dataset is not publicly released due to privacy constraints. Please contact us for collaboration._
+## 🧪tase
 
-## 📈 Results
+* 🎥 **Video**: 1920×1080, 30 FPS, walking videos (10m indoor path)
+* 👨‍⚕️ **Subjects**: 81 participants (ASD, DHS, LCS, HipOA)
+* 🔎 **Annotation**: Radiographic-based diagnosis + ROI annotation from orthopedic surgeons
+* ❗ *Dataset is not publicly released due to ethical constraints. Contact authors for collaboration.*
 
-| Method             | Accuracy  | F1-score | AUC      |
-| ------------------ | --------- | -------- | -------- |
-| Baseline CNN       | 78.5%     | 0.76     | 0.81     |
-| **Ours (CK-Attn)** | **85.2%** | **0.83** | **0.89** |
+---
+
+## 📊 Performance (from paper)
+
+| Method              | Accuracy (%) | Precision (%) | F1 Score (%) |
+| ------------------- | ------------ | ------------- | ------------ |
+| CNN (Baseline)      | 52.56        | 81.11         | 54.01        |
+| ST-GCN              | 60.42        | 60.22         | 59.80        |
+| 3D CNN (RGB only)   | 62.09        | 64.55         | 60.13        |
+| + Add Fusion (Ours) | **71.35**    | **75.51**     | **71.12**    |
+| + Concat Fusion     | 59.26        | 62.46         | 54.70        |
+| + Avg Fusion        | 65.83        | 66.18         | 64.88        |
+
+---
 
 ## 📄 Citation
 
-If you find this project helpful, please cite our work:
+If you find this repository helpful, please cite:
 
 ```bibtex
-@article{chen2025clinical,
+@inproceedings{chen2025clinicalgait,
   title={A Clinical Knowledge-Guided Attention Framework for Gait-Based Adult Spinal Deformity Diagnosis},
-  author={Chen, Kaixu and ...},
-  journal={TBA},
-  year={2025}
+  author={Chen, Kaixu and Asada, Tomoyuki and Miura, Kousei and Yamazaki, Masashi and Ienaga, Naoto and Kuroda, Yoshihiro and Kitahara, Itaru},
+  booktitle={Proceedings of SPIE Medical Imaging},
+  year={2025},
+  organization={SPIE}
 }
 ```
+
+---
+
+## 🔗 Related Projects
+
+* [PhaseMix (IEEE Access 2024)](https://ieeexplore.ieee.org/document/10714330)
+* [Two-Stage ASD Gait Classifier (Frontiers in Neuroscience 2023)](https://www.frontiersin.org/articles/10.3389/fnins.2023.1278584)
